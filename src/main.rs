@@ -1,9 +1,10 @@
-extern crate a;
+mod domain;
 
-use a::domain::config::Config;
 use anyhow::Result;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+use domain::config::Config;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "sqsproxyd")]
