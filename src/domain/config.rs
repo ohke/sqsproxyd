@@ -5,8 +5,8 @@ use url::Url;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    sqs_url: Url,
-    webhook_url: Url,
+    pub sqs_url: Url,
+    pub webhook_url: Url,
 }
 
 impl Config {
