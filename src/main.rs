@@ -1,9 +1,11 @@
+mod app;
 mod domain;
 
 use anyhow::Result;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+use app::daemon::Daemon;
 use domain::config::Config;
 
 #[derive(StructOpt, Debug)]
@@ -23,8 +25,10 @@ fn main() -> Result<()> {
     }
 
     let config = Config::new()?;
-
     println!("{:#?}", config);
+
+    let daemon = Daemon::new(config);
+    daemon.run();
 
     Ok(())
 }
