@@ -7,6 +7,7 @@ use aws_sdk_sqs::Client;
 pub trait Sqs {
     async fn receive_messages(&self) -> Result<Option<Vec<Message>>>;
     async fn send_message(&self, message_body: String) -> Result<()>;
+    async fn delete_message(&self, receipt_handle: String) -> Result<()>;
 }
 
 pub struct AwsSqs {
@@ -40,6 +41,16 @@ impl Sqs for AwsSqs {
             .send_message()
             .queue_url(&self.url)
             .message_body(message_body)
+            .send()
+            .await?;
+        Ok(())
+    }
+
+    async fn delete_message(&self, receipt_handle: String) -> Result<()> {
+        self.client
+            .delete_message()
+            .queue_url(&self.url)
+            .receipt_handle(&receipt_handle)
             .send()
             .await?;
         Ok(())

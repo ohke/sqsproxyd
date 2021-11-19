@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
     let sqs = AwsSqs::new(config.sqs_url.to_string()).await;
 
     let daemon = Daemon::new(config, Box::new(sqs));
-    daemon.run();
+    daemon.run().await?;
 
     Ok(())
 }
