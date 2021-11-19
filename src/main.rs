@@ -1,5 +1,6 @@
 mod app;
 mod domain;
+mod infra;
 
 use anyhow::Result;
 use std::path::PathBuf;
@@ -7,6 +8,7 @@ use structopt::StructOpt;
 
 use app::daemon::Daemon;
 use domain::config::Config;
+use infra::sqs::AwsSqs;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "sqsproxyd")]
@@ -15,7 +17,8 @@ pub struct Arg {
     env: Option<PathBuf>,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     // get configuration parameters
     let arg = Arg::from_args();
     if let Some(v) = arg.env {
@@ -25,9 +28,11 @@ fn main() -> Result<()> {
     }
 
     let config = Config::new()?;
-    println!("{:#?}", config);
 
-    let daemon = Daemon::new(config);
+    // create sqs client
+    let sqs = AwsSqs::new(config.sqs_url.to_string()).await;
+
+    let daemon = Daemon::new(config, Box::new(sqs));
     daemon.run();
 
     Ok(())
