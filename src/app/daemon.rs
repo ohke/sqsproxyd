@@ -2,6 +2,7 @@ use anyhow::Result;
 use tokio::time::{sleep, Duration};
 
 use crate::domain::config::Config;
+use crate::domain::message::Message;
 use crate::infra::sqs::Sqs;
 
 pub struct Daemon {
@@ -23,7 +24,8 @@ impl Daemon {
                     self.sleep().await;
                 }
                 for m in messages {
-                    println!("{:?}", m);
+                    let message: Message = serde_json::from_str(&m.body.unwrap())?;
+                    println!("{:?}", message);
                     self.sqs.delete_message(m.receipt_handle.unwrap()).await?;
                 }
             } else {
