@@ -9,6 +9,7 @@ use structopt::StructOpt;
 use app::daemon::Daemon;
 use domain::config::Config;
 use infra::sqs::AwsSqs;
+use infra::webhook::WebhookImpl;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "sqsproxyd")]
@@ -31,8 +32,8 @@ async fn main() -> Result<()> {
 
     // create sqs client
     let sqs = AwsSqs::new(config.sqs_url.to_string()).await;
-
-    let daemon = Daemon::new(config, Box::new(sqs));
+    let webhook = WebhookImpl::new(config.webhook_url.clone());
+    let daemon = Daemon::new(config, Box::new(sqs), Box::new(webhook));
     daemon.run().await?;
 
     Ok(())
