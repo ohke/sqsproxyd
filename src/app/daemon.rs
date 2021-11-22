@@ -25,21 +25,26 @@ impl Daemon {
         println!("{:?}", self.config);
 
         loop {
-            if let Some(messages) = self.sqs.receive_messages().await? {
-                if messages.is_empty() {
-                    self.sleep().await;
-                }
-                for m in messages {
-                    let message: Message = serde_json::from_str(&m.body.unwrap())?;
-                    println!("{:?}", message);
-                    let res = self.webhook.post(message.path, message.data).await?;
-                    println!("{}", res);
-                    self.sqs.delete_message(m.receipt_handle.unwrap()).await?;
-                }
-            } else {
+            self.process().await?
+        }
+    }
+
+    async fn process(&self) -> Result<()> {
+        if let Some(messages) = self.sqs.receive_messages().await? {
+            if messages.is_empty() {
                 self.sleep().await;
             }
+            for m in messages {
+                let message: Message = serde_json::from_str(&m.body.unwrap())?;
+                println!("{:?}", message);
+                let res = self.webhook.post(message.path, message.data).await?;
+                println!("{}", res);
+                self.sqs.delete_message(m.receipt_handle.unwrap()).await?;
+            }
+        } else {
+            self.sleep().await;
         }
+        Ok(())
     }
 
     async fn sleep(&self) {
