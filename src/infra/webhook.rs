@@ -23,6 +23,6 @@ impl Webhook for WebhookImpl {
         let client = reqwest::Client::new();
         let url = self.url.clone().join(&path)?;
         let res = client.post(url).body(data).send().await?;
-        Ok(res.json().await?)
+        Ok(res.text().await?)
     }
 }
