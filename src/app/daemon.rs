@@ -25,14 +25,17 @@ impl Daemon {
         println!("{:?}", self.config);
 
         loop {
-            self.process().await?
+            let has_messages = self.process().await?;
+            if !has_messages {
+                self.sleep().await;
+            }
         }
     }
 
-    async fn process(&self) -> Result<()> {
+    async fn process(&self) -> Result<bool> {
         if let Some(messages) = self.sqs.receive_messages().await? {
             if messages.is_empty() {
-                self.sleep().await;
+                return Ok(false);
             }
             for m in messages {
                 let message: Message = serde_json::from_str(&m.body.unwrap())?;
@@ -41,10 +44,10 @@ impl Daemon {
                 println!("{}", res);
                 self.sqs.delete_message(m.receipt_handle.unwrap()).await?;
             }
+            Ok(true)
         } else {
-            self.sleep().await;
+            Ok(false)
         }
-        Ok(())
     }
 
     async fn sleep(&self) {
