@@ -1,8 +1,13 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use aws_sdk_sqs::model::Message;
 use aws_sdk_sqs::Client;
 
+use crate::domain::message::Message;
+
+#[cfg(test)]
+use mockall::automock;
+
+#[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Sqs {
     async fn receive_messages(&self) -> Result<Option<Vec<Message>>>;
@@ -27,13 +32,17 @@ impl AwsSqs {
 #[async_trait]
 impl Sqs for AwsSqs {
     async fn receive_messages(&self) -> Result<Option<Vec<Message>>> {
-        let output = self
+        match self
             .client
             .receive_message()
             .queue_url(&self.url)
             .send()
-            .await?;
-        Ok(output.messages)
+            .await?
+            .messages
+        {
+            None => Ok(None),
+            Some(messages) => Ok(Some(messages.into_iter().map(Message::from).collect())),
+        }
     }
 
     async fn send_message(&self, message_body: String) -> Result<()> {

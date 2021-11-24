@@ -1,7 +1,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
+#[cfg(test)]
+use mockall::automock;
 use url::Url;
 
+#[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Webhook {
     async fn post(&self, path: String, data: String) -> Result<String>;
