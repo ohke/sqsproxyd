@@ -3,10 +3,16 @@ use envy;
 use serde::Deserialize;
 use url::Url;
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct Config {
     pub sqs_url: Url,
     pub webhook_url: Url,
+    #[serde(default = "default_worker_concurrency")]
+    pub worker_concurrency: usize,
+}
+
+fn default_worker_concurrency() -> usize {
+    1
 }
 
 impl Config {
