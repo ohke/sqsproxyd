@@ -2,7 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use aws_sdk_sqs::Client;
 
-use crate::domain::message::Message;
+use crate::domain::message::{Message, MessageBody};
 
 #[cfg(test)]
 use mockall::automock;
@@ -11,7 +11,7 @@ use mockall::automock;
 #[async_trait]
 pub trait Sqs {
     async fn receive_messages(&self) -> Result<Option<Vec<Message>>>;
-    async fn send_message(&self, message_body: String) -> Result<()>;
+    async fn send_message(&self, message_body: MessageBody) -> Result<()>;
     async fn delete_message(&self, receipt_handle: String) -> Result<()>;
 }
 
@@ -24,7 +24,7 @@ impl AwsSqs {
     pub async fn new(url: String) -> Self {
         AwsSqs {
             client: Client::new(&aws_config::load_from_env().await),
-            url: url.to_string(),
+            url,
         }
     }
 }
@@ -45,11 +45,11 @@ impl Sqs for AwsSqs {
         }
     }
 
-    async fn send_message(&self, message_body: String) -> Result<()> {
+    async fn send_message(&self, message_body: MessageBody) -> Result<()> {
         self.client
             .send_message()
             .queue_url(&self.url)
-            .message_body(message_body)
+            .message_body(serde_json::to_string(&message_body)?)
             .send()
             .await?;
         Ok(())
@@ -65,21 +65,3 @@ impl Sqs for AwsSqs {
         Ok(())
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//
-//     struct MockSqs {
-//
-//     }
-//
-//     impl Sqs for MockSqs {
-//         fn receive_messages() -> Result<Vec<Message>> {
-//             todo!()
-//         }
-//         fn send_message(message: Message) -> Result<()> {
-//             todo!()
-//         }
-//     }
-// }

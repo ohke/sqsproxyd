@@ -2,6 +2,7 @@ use anyhow::Result;
 use tokio::time::{sleep, Duration};
 
 use crate::domain::config::Config;
+use crate::domain::message::MessageBody;
 use crate::infra::sqs::Sqs;
 use crate::infra::webhook::Webhook;
 
@@ -9,14 +10,21 @@ pub struct Daemon {
     config: Config,
     sqs: Box<dyn Sqs>,
     webhook: Box<dyn Webhook>,
+    output_sqs: Option<Box<dyn Sqs>>,
 }
 
 impl Daemon {
-    pub fn new(config: Config, sqs: Box<dyn Sqs>, webhook: Box<dyn Webhook>) -> Self {
+    pub fn new(
+        config: Config,
+        sqs: Box<dyn Sqs>,
+        webhook: Box<dyn Webhook>,
+        output_sqs: Option<Box<dyn Sqs>>,
+    ) -> Self {
         Daemon {
             config,
             sqs,
             webhook,
+            output_sqs,
         }
     }
 
@@ -38,11 +46,25 @@ impl Daemon {
             }
             for message in messages {
                 println!("{:?}", message);
+
                 let res = self
                     .webhook
-                    .post(message.body.path, message.body.data)
+                    .post(&message.body.path, message.body.data.clone())
                     .await?;
                 println!("{}", res);
+
+                if self.output_sqs.is_some() {
+                    self.output_sqs
+                        .as_ref()
+                        .unwrap()
+                        .send_message(MessageBody {
+                            path: message.body.path.clone(),
+                            data: res,
+                            context: message.body.context.clone(),
+                        })
+                        .await?;
+                }
+
                 self.sqs.delete_message(message.receipt_handle).await?;
             }
             Ok(true)
@@ -89,9 +111,22 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok("".to_string()));
 
+        let mut output_sqs = MockSqs::new();
+        output_sqs.expect_receive_messages().times(0);
+        output_sqs
+            .expect_send_message()
+            .times(1)
+            .returning(|_| Ok(()));
+        output_sqs.expect_delete_message().times(0);
+
         let config = Config::new().unwrap();
 
-        let daemon = Daemon::new(config, Box::new(sqs), Box::new(webhook));
+        let daemon = Daemon::new(
+            config,
+            Box::new(sqs),
+            Box::new(webhook),
+            Some(Box::new(output_sqs)),
+        );
         assert!(daemon.process().await.unwrap());
     }
 }

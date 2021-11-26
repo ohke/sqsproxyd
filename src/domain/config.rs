@@ -7,6 +7,7 @@ use url::Url;
 pub struct Config {
     pub sqs_url: Url,
     pub webhook_url: Url,
+    pub output_sqs_url: Option<Url>,
     #[serde(default = "default_worker_concurrency")]
     pub worker_concurrency: usize,
 }
