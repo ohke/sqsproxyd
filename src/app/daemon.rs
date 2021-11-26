@@ -86,6 +86,7 @@ mod tests {
     use crate::domain::message::*;
     use crate::infra::sqs::*;
     use crate::infra::webhook::*;
+    use mockall::predicate::*;
 
     #[tokio::test]
     async fn test_process_1_message() {
@@ -103,18 +104,26 @@ mod tests {
             }]))
         });
         sqs.expect_send_message().times(0).returning(|_| Ok(()));
-        sqs.expect_delete_message().times(1).returning(|_| Ok(()));
+        sqs.expect_delete_message()
+            .with(eq("receipt_handle".to_string()))
+            .times(1)
+            .returning(|_| Ok(()));
 
         let mut webhook = MockWebhook::new();
         webhook
             .expect_post()
             .times(1)
-            .returning(|_, _| Ok("".to_string()));
+            .returning(|_, _| Ok("result".to_string()));
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
         output_sqs
             .expect_send_message()
+            .with(eq(MessageBody {
+                path: "/hoge".to_string(),
+                data: "result".to_string(),
+                context: Some("".to_string()),
+            }))
             .times(1)
             .returning(|_| Ok(()));
         output_sqs.expect_delete_message().times(0);

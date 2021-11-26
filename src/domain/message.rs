@@ -15,7 +15,7 @@ impl From<aws_sdk_sqs::model::Message> for Message {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Debug)]
 pub struct MessageBody {
     pub path: String,
     pub data: String,
