@@ -47,11 +47,14 @@ impl Daemon {
             for message in messages {
                 println!("{:?}", message);
 
-                let res = self
+                let (is_successed, res) = self
                     .webhook
                     .post(&message.body.path, message.body.data.clone())
                     .await?;
-                println!("{}", res);
+                if !is_successed {
+                    println!("Not succeeded: {:?}", &res);
+                    continue;
+                }
 
                 if self.output_sqs.is_some() {
                     self.output_sqs
@@ -113,7 +116,7 @@ mod tests {
         webhook
             .expect_post()
             .times(1)
-            .returning(|_, _| Ok("result".to_string()));
+            .returning(|_, _| Ok((true, "result".to_string())));
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
@@ -126,6 +129,46 @@ mod tests {
             }))
             .times(1)
             .returning(|_| Ok(()));
+        output_sqs.expect_delete_message().times(0);
+
+        let config = Config::new().unwrap();
+
+        let daemon = Daemon::new(
+            config,
+            Box::new(sqs),
+            Box::new(webhook),
+            Some(Box::new(output_sqs)),
+        );
+        assert!(daemon.process().await.unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_process_1_failed_message() {
+        dotenv::from_filename("env/test.env").expect("Not found env file.");
+
+        let mut sqs = MockSqs::new();
+        sqs.expect_receive_messages().times(1).returning(|| {
+            Ok(Some(vec![Message {
+                receipt_handle: "receipt_handle".to_string(),
+                body: MessageBody {
+                    path: "/hoge".to_string(),
+                    data: "{\"key1\": 1}".to_string(),
+                    context: Some("".to_string()),
+                },
+            }]))
+        });
+        sqs.expect_send_message().times(0).returning(|_| Ok(()));
+        sqs.expect_delete_message().times(0);
+
+        let mut webhook = MockWebhook::new();
+        webhook
+            .expect_post()
+            .times(1)
+            .returning(|_, _| Ok((false, "result".to_string())));
+
+        let mut output_sqs = MockSqs::new();
+        output_sqs.expect_receive_messages().times(0);
+        output_sqs.expect_send_message().times(0);
         output_sqs.expect_delete_message().times(0);
 
         let config = Config::new().unwrap();

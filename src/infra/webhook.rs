@@ -7,7 +7,7 @@ use url::Url;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Webhook {
-    async fn post(&self, path: &str, data: String) -> Result<String>;
+    async fn post(&self, path: &str, data: String) -> Result<(bool, String)>;
 }
 
 pub struct WebhookImpl {
@@ -22,10 +22,10 @@ impl WebhookImpl {
 
 #[async_trait]
 impl Webhook for WebhookImpl {
-    async fn post(&self, path: &str, data: String) -> Result<String> {
+    async fn post(&self, path: &str, data: String) -> Result<(bool, String)> {
         let client = reqwest::Client::new();
         let url = self.url.clone().join(path)?;
         let res = client.post(url).body(data).send().await?;
-        Ok(res.text().await?)
+        Ok((res.status().is_success(), res.text().await?))
     }
 }
