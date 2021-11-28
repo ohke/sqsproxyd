@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
 
     // create sqs client
     let sqs = Box::new(AwsSqs::new(config.sqs_url.to_string()).await);
-    let webhook = Box::new(WebhookImpl::new(config.webhook_url.clone()));
+    let webhook = Box::new(WebhookImpl::new(config.clone()));
     let output_sqs: Option<Box<dyn Sqs>> = match &config.output_sqs_url {
         None => None,
         Some(u) => Some(Box::new(AwsSqs::new(u.to_string()).await)),

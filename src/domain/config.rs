@@ -10,10 +10,20 @@ pub struct Config {
     pub output_sqs_url: Option<Url>,
     #[serde(default = "default_worker_concurrency")]
     pub worker_concurrency: usize,
+    #[serde(default)]
+    pub connection_timeout: Timeout,
 }
 
 fn default_worker_concurrency() -> usize {
     1
+}
+
+#[derive(Clone, Copy, Deserialize, Debug)]
+pub struct Timeout(pub u64);
+impl Default for Timeout {
+    fn default() -> Self {
+        Timeout(30)
+    }
 }
 
 impl Config {
