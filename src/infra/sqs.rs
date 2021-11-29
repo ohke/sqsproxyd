@@ -18,13 +18,15 @@ pub trait Sqs {
 pub struct AwsSqs {
     client: Client,
     url: String,
+    max_number_of_messages: usize,
 }
 
 impl AwsSqs {
-    pub async fn new(url: String) -> Self {
+    pub async fn new(url: String, max_number_of_messages: usize) -> Self {
         AwsSqs {
             client: Client::new(&aws_config::load_from_env().await),
             url,
+            max_number_of_messages,
         }
     }
 }
@@ -36,6 +38,7 @@ impl Sqs for AwsSqs {
             .client
             .receive_message()
             .queue_url(&self.url)
+            .max_number_of_messages(TryFrom::try_from(self.max_number_of_messages).unwrap())
             .send()
             .await?
             .messages

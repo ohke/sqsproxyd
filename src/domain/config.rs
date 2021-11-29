@@ -12,9 +12,15 @@ pub struct Config {
     pub worker_concurrency: usize,
     #[serde(default)]
     pub connection_timeout: Timeout,
+    #[serde(default = "default_max_number_of_messages")]
+    pub max_number_of_messages: usize,
 }
 
 fn default_worker_concurrency() -> usize {
+    1
+}
+
+fn default_max_number_of_messages() -> usize {
     1
 }
 

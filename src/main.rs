@@ -31,11 +31,14 @@ async fn main() -> Result<()> {
     let config = Config::new()?;
 
     // create sqs client
-    let sqs = Box::new(AwsSqs::new(config.sqs_url.to_string()).await);
+    let sqs =
+        Box::new(AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await);
     let webhook = Box::new(WebhookImpl::new(config.clone()));
     let output_sqs: Option<Box<dyn Sqs>> = match &config.output_sqs_url {
         None => None,
-        Some(u) => Some(Box::new(AwsSqs::new(u.to_string()).await)),
+        Some(u) => Some(Box::new(
+            AwsSqs::new(u.to_string(), config.max_number_of_messages).await,
+        )),
     };
     let daemon = Daemon::new(config, sqs, webhook, output_sqs);
     daemon.run().await?;
