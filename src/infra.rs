@@ -1,2 +1,3 @@
+pub mod logger;
 pub mod sqs;
 pub mod webhook;

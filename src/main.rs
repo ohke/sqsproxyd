@@ -8,6 +8,7 @@ use structopt::StructOpt;
 
 use app::daemon::Daemon;
 use domain::config::Config;
+use infra::logger::setup_logger;
 use infra::sqs::{AwsSqs, Sqs};
 use infra::webhook::WebhookImpl;
 
@@ -20,6 +21,8 @@ pub struct Arg {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    setup_logger()?;
+
     // get configuration parameters
     let arg = Arg::from_args();
     if let Some(v) = arg.env {

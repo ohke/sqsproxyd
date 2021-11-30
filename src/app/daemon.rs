@@ -1,5 +1,6 @@
 use anyhow::Result;
 use tokio::time::{sleep, Duration};
+use tracing::info;
 
 use crate::domain::config::Config;
 use crate::domain::message::MessageBody;
@@ -29,7 +30,7 @@ impl Daemon {
     }
 
     pub async fn run(self) -> Result<()> {
-        println!("{:?}", self.config);
+        info!("{:?}", self.config);
 
         loop {
             let has_messages = self.process().await?;
@@ -45,14 +46,14 @@ impl Daemon {
                 return Ok(false);
             }
             for message in messages {
-                println!("{:?}", message);
+                info!("{:?}", message);
 
                 let (is_successed, res) = self
                     .webhook
                     .post(&message.body.path, message.body.data.clone())
                     .await?;
                 if !is_successed {
-                    println!("Not succeeded: {:?}", &res);
+                    info!("Not succeeded: {:?}", &res);
                     continue;
                 }
 
@@ -77,8 +78,7 @@ impl Daemon {
     }
 
     async fn sleep(&self) {
-        // TODO: logger
-        println!("wait");
+        info!("wait");
         sleep(Duration::from_millis(1000)).await;
     }
 }
