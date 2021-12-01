@@ -28,6 +28,10 @@ impl Webhook for WebhookImpl {
         let url = self.config.webhook_url.clone().join(path)?;
         let res = client
             .post(url)
+            .header(
+                reqwest::header::USER_AGENT,
+                format!("sqsdproxy/{}", env!("CARGO_PKG_VERSION")),
+            )
             .timeout(Duration::from_secs(self.config.connection_timeout.0))
             .body(data)
             .send()
