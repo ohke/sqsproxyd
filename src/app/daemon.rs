@@ -32,12 +32,26 @@ impl Daemon {
     pub async fn run(self) -> Result<()> {
         info!("{:?}", self.config);
 
+        self.init().await?;
+
         loop {
             let has_messages = self.process().await?;
             if !has_messages {
                 self.sleep().await;
             }
         }
+    }
+
+    async fn init(&self) -> Result<()> {
+        if let Some(path) = &self.config.webhook_health_check_path {
+            loop {
+                if self.webhook.get(path).await.is_ok() {
+                    break;
+                }
+            }
+        }
+
+        Ok(())
     }
 
     async fn process(&self) -> Result<bool> {

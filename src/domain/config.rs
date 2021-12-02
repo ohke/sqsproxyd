@@ -14,6 +14,7 @@ pub struct Config {
     pub connection_timeout: Timeout,
     #[serde(default = "default_max_number_of_messages")]
     pub max_number_of_messages: usize,
+    pub webhook_health_check_path: Option<String>,
 }
 
 fn default_worker_concurrency() -> usize {
