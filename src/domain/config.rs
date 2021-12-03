@@ -14,6 +14,8 @@ pub struct Config {
     pub connection_timeout: Timeout,
     #[serde(default = "default_max_number_of_messages")]
     pub max_number_of_messages: usize,
+    #[serde(default = "default_sleep_seconds")]
+    pub sleep_seconds: u64,
     pub webhook_health_check_path: Option<String>,
 }
 
@@ -38,4 +40,8 @@ impl Config {
         let v = envy::prefixed("SQSPROXYD_").from_env::<Config>()?;
         Ok(v)
     }
+}
+
+fn default_sleep_seconds() -> u64 {
+    1
 }

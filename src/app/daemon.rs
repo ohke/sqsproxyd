@@ -92,8 +92,8 @@ impl Daemon {
     }
 
     async fn sleep(&self) {
-        info!("wait");
-        sleep(Duration::from_millis(1000)).await;
+        info!("sleep");
+        sleep(Duration::from_secs(self.config.sleep_seconds)).await;
     }
 }
 
