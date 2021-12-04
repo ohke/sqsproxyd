@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Message {
     pub body: MessageBody,
     pub receipt_handle: String,

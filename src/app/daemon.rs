@@ -3,7 +3,7 @@ use tokio::time::{sleep, Duration};
 use tracing::info;
 
 use crate::domain::config::Config;
-use crate::domain::message::MessageBody;
+use crate::domain::message::{Message, MessageBody};
 use crate::infra::sqs::Sqs;
 use crate::infra::webhook::Webhook;
 
@@ -35,8 +35,14 @@ impl Daemon {
         self.init().await?;
 
         loop {
-            let has_messages = self.process().await?;
-            if !has_messages {
+            let messages = self.poll().await?;
+            if let Some(messages) = messages {
+                if messages.is_empty() {
+                    self.sleep().await;
+                } else {
+                    self.process(messages).await?;
+                }
+            } else {
                 self.sleep().await;
             }
         }
@@ -54,41 +60,39 @@ impl Daemon {
         Ok(())
     }
 
-    async fn process(&self) -> Result<bool> {
-        if let Some(messages) = self.sqs.receive_messages().await? {
-            if messages.is_empty() {
-                return Ok(false);
-            }
-            for message in messages {
-                info!("{:?}", message);
+    async fn poll(&self) -> Result<Option<Vec<Message>>> {
+        self.sqs.receive_messages().await
+    }
 
-                let (is_successed, res) = self
-                    .webhook
-                    .post(&message.body.path, message.body.data.clone())
+    async fn process(&self, messages: Vec<Message>) -> Result<()> {
+        for message in messages {
+            info!("{:?}", message);
+
+            let (is_successed, res) = self
+                .webhook
+                .post(&message.body.path, message.body.data.clone())
+                .await?;
+            if !is_successed {
+                info!("Not succeeded: {:?}", &res);
+                continue;
+            }
+
+            if self.output_sqs.is_some() {
+                self.output_sqs
+                    .as_ref()
+                    .unwrap()
+                    .send_message(MessageBody {
+                        path: message.body.path.clone(),
+                        data: res,
+                        context: message.body.context.clone(),
+                    })
                     .await?;
-                if !is_successed {
-                    info!("Not succeeded: {:?}", &res);
-                    continue;
-                }
-
-                if self.output_sqs.is_some() {
-                    self.output_sqs
-                        .as_ref()
-                        .unwrap()
-                        .send_message(MessageBody {
-                            path: message.body.path.clone(),
-                            data: res,
-                            context: message.body.context.clone(),
-                        })
-                        .await?;
-                }
-
-                self.sqs.delete_message(message.receipt_handle).await?;
             }
-            Ok(true)
-        } else {
-            Ok(false)
+
+            self.sqs.delete_message(message.receipt_handle).await?;
         }
+
+        Ok(())
     }
 
     async fn sleep(&self) {
@@ -153,7 +157,32 @@ mod tests {
             Box::new(webhook),
             Some(Box::new(output_sqs)),
         );
-        assert!(daemon.process().await.unwrap());
+
+        let messages = daemon.poll().await.unwrap().unwrap();
+        assert_eq!(messages.len(), 1);
+        assert_eq!(
+            messages[0],
+            Message {
+                receipt_handle: "receipt_handle".to_string(),
+                body: MessageBody {
+                    path: "/hoge".to_string(),
+                    data: "{\"key1\": 1}".to_string(),
+                    context: Some("".to_string()),
+                },
+            }
+        );
+
+        daemon
+            .process(vec![Message {
+                body: MessageBody {
+                    path: "/hoge".to_string(),
+                    data: "{\"key1\": 1}".to_string(),
+                    context: Some("".to_string()),
+                },
+                receipt_handle: "receipt_handle".to_string(),
+            }])
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -193,6 +222,31 @@ mod tests {
             Box::new(webhook),
             Some(Box::new(output_sqs)),
         );
-        assert!(daemon.process().await.unwrap());
+
+        let messages = daemon.poll().await.unwrap().unwrap();
+        assert_eq!(messages.len(), 1);
+        assert_eq!(
+            messages[0],
+            Message {
+                receipt_handle: "receipt_handle".to_string(),
+                body: MessageBody {
+                    path: "/hoge".to_string(),
+                    data: "{\"key1\": 1}".to_string(),
+                    context: Some("".to_string()),
+                },
+            }
+        );
+
+        daemon
+            .process(vec![Message {
+                receipt_handle: "receipt_handle".to_string(),
+                body: MessageBody {
+                    path: "/hoge".to_string(),
+                    data: "{\"key1\": 1}".to_string(),
+                    context: Some("".to_string()),
+                },
+            }])
+            .await
+            .unwrap();
     }
 }
