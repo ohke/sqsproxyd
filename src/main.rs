@@ -8,9 +8,11 @@ use structopt::StructOpt;
 
 use app::daemon::Daemon;
 use domain::config::Config;
-use infra::logger::setup_logger;
-use infra::sqs::{AwsSqs, Sqs};
-use infra::webhook::WebhookImpl;
+use infra::{
+    logger::setup_logger,
+    sqs::{AwsSqs, Sqs},
+    webhook::WebhookImpl,
+};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "sqsproxyd")]
@@ -37,14 +39,15 @@ async fn main() -> Result<()> {
     let sqs =
         Box::new(AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await);
     let webhook = Box::new(WebhookImpl::new(config.clone()));
-    let output_sqs: Option<Box<dyn Sqs>> = match &config.output_sqs_url {
+    let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &config.output_sqs_url {
         None => None,
         Some(u) => Some(Box::new(
             AwsSqs::new(u.to_string(), config.max_number_of_messages).await,
         )),
     };
+
     let daemon = Daemon::new(config, sqs, webhook, output_sqs);
-    daemon.run().await?;
+    let _ = tokio::spawn(async move { daemon.run().await }).await?;
 
     Ok(())
 }

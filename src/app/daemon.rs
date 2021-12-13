@@ -9,17 +9,17 @@ use crate::infra::webhook::Webhook;
 
 pub struct Daemon {
     config: Config,
-    sqs: Box<dyn Sqs>,
-    webhook: Box<dyn Webhook>,
-    output_sqs: Option<Box<dyn Sqs>>,
+    sqs: Box<dyn Sqs + Send + Sync>,
+    webhook: Box<dyn Webhook + Send + Sync>,
+    output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
 }
 
 impl Daemon {
     pub fn new(
         config: Config,
-        sqs: Box<dyn Sqs>,
-        webhook: Box<dyn Webhook>,
-        output_sqs: Option<Box<dyn Sqs>>,
+        sqs: Box<dyn Sqs + Send + Sync>,
+        webhook: Box<dyn Webhook + Send + Sync>,
+        output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Self {
         Daemon {
             config,
