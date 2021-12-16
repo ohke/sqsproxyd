@@ -1,10 +1,13 @@
 version: '3.8'
 services:
   dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: dev
+    image: rust:1.57
+    working_dir: /usr/src/sqsproxyd
     volumes:
       - .:/usr/src/sqsproxyd
     tty: true
+  release:
+    image: sqsproxyd
+    build:
+      context: .
+      dockerfile: Dockerfile
