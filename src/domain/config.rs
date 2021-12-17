@@ -1,3 +1,4 @@
+use crate::domain::arg::Arg;
 use anyhow::Result;
 use envy;
 use serde::Deserialize;
@@ -32,9 +33,35 @@ fn default_connection_timeout() -> u64 {
 }
 
 impl Config {
-    pub fn new() -> Result<Self> {
-        let v = envy::prefixed("SQSPROXYD_").from_env::<Config>()?;
-        Ok(v)
+    pub fn new(arg: Arg) -> Result<Self> {
+        let mut c = envy::prefixed("SQSPROXYD_").from_env::<Config>()?;
+
+        if let Some(v) = arg.sqs_url {
+            c.sqs_url = v;
+        }
+        if let Some(v) = arg.webhook_url {
+            c.webhook_url = v;
+        }
+        if let Some(v) = arg.output_sqs_url {
+            c.output_sqs_url = Some(v);
+        }
+        if let Some(v) = arg.worker_concurrency {
+            c.worker_concurrency = v;
+        }
+        if let Some(v) = arg.connection_timeout {
+            c.connection_timeout = v;
+        }
+        if let Some(v) = arg.max_number_of_messages {
+            c.max_number_of_messages = v;
+        }
+        if let Some(v) = arg.sleep_seconds {
+            c.sleep_seconds = v;
+        }
+        if let Some(v) = arg.webhook_health_check_path {
+            c.webhook_health_check_path = Some(v);
+        }
+
+        Ok(c)
     }
 }
 

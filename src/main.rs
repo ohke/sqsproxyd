@@ -3,23 +3,15 @@ mod domain;
 mod infra;
 
 use anyhow::Result;
-use std::path::PathBuf;
 use structopt::StructOpt;
 
 use app::daemon::Daemon;
-use domain::config::Config;
+use domain::{arg::Arg, config::Config};
 use infra::{
     logger::setup_logger,
     sqs::{AwsSqs, Sqs},
     webhook::WebhookImpl,
 };
-
-#[derive(StructOpt, Debug)]
-#[structopt(name = "sqsproxyd")]
-pub struct Arg {
-    #[structopt(short, long, parse(from_os_str))]
-    env: Option<PathBuf>,
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -27,13 +19,7 @@ async fn main() -> Result<()> {
 
     // get configuration parameters
     let arg = Arg::from_args();
-    if let Some(v) = arg.env {
-        dotenv::from_filename(v).expect("Not found env file.");
-    } else {
-        dotenv::dotenv().ok();
-    }
-
-    let config = Config::new()?;
+    let config = Config::new(arg)?;
 
     let mut handles = vec![];
 

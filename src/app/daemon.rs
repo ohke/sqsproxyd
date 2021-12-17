@@ -104,6 +104,7 @@ impl Daemon {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::arg::*;
     use crate::domain::message::*;
     use crate::infra::sqs::*;
     use crate::infra::webhook::*;
@@ -149,7 +150,7 @@ mod tests {
             .returning(|_| Ok(()));
         output_sqs.expect_delete_message().times(0);
 
-        let config = Config::new().unwrap();
+        let config = Config::new(Arg::new_empty()).unwrap();
 
         let daemon = Daemon::new(
             config,
@@ -214,7 +215,7 @@ mod tests {
         output_sqs.expect_send_message().times(0);
         output_sqs.expect_delete_message().times(0);
 
-        let config = Config::new().unwrap();
+        let config = Config::new(Arg::new_empty()).unwrap();
 
         let daemon = Daemon::new(
             config,
