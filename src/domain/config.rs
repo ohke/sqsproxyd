@@ -10,8 +10,8 @@ pub struct Config {
     pub output_sqs_url: Option<Url>,
     #[serde(default = "default_worker_concurrency")]
     pub worker_concurrency: usize,
-    #[serde(default)]
-    pub connection_timeout: Timeout,
+    #[serde(default = "default_connection_timeout")]
+    pub connection_timeout: u64,
     #[serde(default = "default_max_number_of_messages")]
     pub max_number_of_messages: usize,
     #[serde(default = "default_sleep_seconds")]
@@ -27,12 +27,8 @@ fn default_max_number_of_messages() -> usize {
     1
 }
 
-#[derive(Clone, Copy, Deserialize, Debug)]
-pub struct Timeout(pub u64);
-impl Default for Timeout {
-    fn default() -> Self {
-        Timeout(30)
-    }
+fn default_connection_timeout() -> u64 {
+    30
 }
 
 impl Config {
