@@ -1,5 +1,8 @@
 use anyhow::Result;
-use tokio::time::{sleep, Duration};
+use tokio::{
+    sync::{broadcast, mpsc},
+    time::{sleep, Duration},
+};
 use tracing::info;
 
 use crate::domain::config::Config;
@@ -29,21 +32,39 @@ impl Daemon {
         }
     }
 
-    pub async fn run(self) -> Result<()> {
+    pub async fn run(
+        self,
+        mut shutdown_rx: broadcast::Receiver<()>,
+        _heartbeat_tx: mpsc::Sender<()>,
+    ) -> Result<()> {
         info!("{:?}", self.config);
 
-        self.init().await?;
+        tokio::select! {
+            result = self.init() => result.unwrap(),
+            _ = shutdown_rx.recv() => {
+                info!("Shutdown (init) .");
+                return Ok(());
+            }
+        }
 
         loop {
-            let messages = self.poll().await?;
-            if let Some(messages) = messages {
-                if messages.is_empty() {
-                    self.sleep().await;
-                } else {
-                    self.process(messages).await?;
+            tokio::select! {
+                result = self.poll() => {
+                    let messages = result.unwrap();
+                    if let Some(messages) = messages {
+                        if messages.is_empty() {
+                            self.sleep().await;
+                        } else {
+                            self.process(messages).await?;
+                        }
+                    } else {
+                        self.sleep().await;
+                    }
                 }
-            } else {
-                self.sleep().await;
+                _ = shutdown_rx.recv() => {
+                    info!("Shutdown.");
+                    return Ok(());
+                }
             }
         }
     }
