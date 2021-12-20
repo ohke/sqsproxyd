@@ -1,13 +1,19 @@
 version: '3.8'
 services:
+  release:
+    image: sqsproxyd
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
   dev:
     image: rust:1.57
     working_dir: /usr/src/sqsproxyd
     volumes:
       - .:/usr/src/sqsproxyd
     tty: true
-  release:
-    image: sqsproxyd
-    build:
-      context: .
-      dockerfile: Dockerfile
+    depends_on:
+      - api
+  api:
+    image: ealen/echo-server:latest
+    ports:
+      - 4000:80
