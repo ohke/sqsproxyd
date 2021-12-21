@@ -1,3 +1,4 @@
+use crate::{AwsSqs, WebhookImpl};
 use anyhow::Result;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -14,6 +15,7 @@ pub struct Daemon {
     config: Config,
     sqs: Box<dyn Sqs + Send + Sync>,
     webhook: Box<dyn Webhook + Send + Sync>,
+    #[allow(dead_code)]
     output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
 }
 
@@ -41,12 +43,38 @@ impl Daemon {
 
         tokio::select! {
             result = self.init() => result.unwrap(),
-            _ = shutdown_rx.recv() => {
-                info!("Shutdown (init) .");
-                return Ok(());
-            }
+            _ = shutdown_rx.recv() => return Ok(()),
         }
 
+        // create workers
+        let (tx, rx) = async_channel::bounded::<Message>(self.config.worker_concurrency);
+        let (worker_shutdown_tx, _) = broadcast::channel(1);
+        let (worker_heartbeat_tx, mut worker_heartbeat_rx) = mpsc::channel::<()>(1);
+
+        for _ in 0..self.config.worker_concurrency {
+            let config = self.config.clone();
+            let sqs = Box::new(
+                AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await,
+            );
+            let webhook = Box::new(WebhookImpl::new(self.config.clone()));
+            let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &self.config.output_sqs_url {
+                None => None,
+                Some(u) => Some(Box::new(
+                    AwsSqs::new(u.to_string(), self.config.max_number_of_messages).await,
+                )),
+            };
+            let rx = rx.clone();
+            let shutdown_rx = worker_shutdown_tx.subscribe();
+            let heartbeat_tx = worker_heartbeat_tx.clone();
+
+            tokio::spawn(async move {
+                Self::process_message(sqs, webhook, output_sqs, rx, shutdown_rx, heartbeat_tx).await
+            });
+        }
+
+        drop(worker_heartbeat_tx);
+
+        // receive SQS message
         loop {
             tokio::select! {
                 result = self.poll() => {
@@ -55,14 +83,17 @@ impl Daemon {
                         if messages.is_empty() {
                             self.sleep().await;
                         } else {
-                            self.process(messages).await?;
+                            for message in messages {
+                                tx.send(message).await?;
+                            }
                         }
                     } else {
                         self.sleep().await;
                     }
                 }
                 _ = shutdown_rx.recv() => {
-                    info!("Shutdown.");
+                    worker_shutdown_tx.send(()).unwrap();
+                    let _ = worker_heartbeat_rx.recv().await;
                     return Ok(());
                 }
             }
@@ -85,6 +116,48 @@ impl Daemon {
         self.sqs.receive_messages().await
     }
 
+    async fn process_message(
+        sqs: Box<dyn Sqs + Send + Sync>,
+        webhook: Box<dyn Webhook + Send + Sync>,
+        output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
+        rx: async_channel::Receiver<Message>,
+        mut shutdown_rx: broadcast::Receiver<()>,
+        _heartbeat_tx: mpsc::Sender<()>,
+    ) -> Result<()> {
+        loop {
+            tokio::select! {
+                result = rx.recv() => {
+                    let message = result.unwrap();
+                    info!("{:?}", message);
+
+                    let (is_successed, res) = webhook
+                        .post(&message.body.path, message.body.data.clone())
+                        .await?;
+                    if !is_successed {
+                        info!("Not succeeded: {:?}", &res);
+                        return Ok(());
+                    }
+
+                    if output_sqs.is_some() {
+                        output_sqs
+                            .as_ref()
+                            .unwrap()
+                            .send_message(MessageBody {
+                                path: message.body.path.clone(),
+                                data: res,
+                                context: message.body.context.clone(),
+                            })
+                            .await?;
+                    }
+
+                    sqs.delete_message(message.receipt_handle).await?;
+                }
+                _ = shutdown_rx.recv() => return Ok(()),
+            }
+        }
+    }
+
+    #[allow(dead_code)]
     async fn process(&self, messages: Vec<Message>) -> Result<()> {
         for message in messages {
             info!("{:?}", message);

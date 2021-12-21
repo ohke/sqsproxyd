@@ -26,38 +26,32 @@ async fn main() -> Result<()> {
     let arg = Arg::from_args();
     let config = Config::new(arg)?;
 
-    let mut handles = vec![];
+    // run daemon
     let (shutdown_tx, _) = broadcast::channel(1);
     let (heartbeat_tx, mut heartbeat_rx) = mpsc::channel(1);
 
-    for _ in 0..config.worker_concurrency {
-        let config = config.clone();
-        let sqs =
-            Box::new(AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await);
-        let webhook = Box::new(WebhookImpl::new(config.clone()));
-        let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &config.output_sqs_url {
-            None => None,
-            Some(u) => Some(Box::new(
-                AwsSqs::new(u.to_string(), config.max_number_of_messages).await,
-            )),
-        };
-        let shutdown_rx = shutdown_tx.subscribe();
-        let heartbeat_tx = heartbeat_tx.clone();
+    let config = config.clone();
+    let sqs =
+        Box::new(AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await);
+    let webhook = Box::new(WebhookImpl::new(config.clone()));
+    let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &config.output_sqs_url {
+        None => None,
+        Some(u) => Some(Box::new(
+            AwsSqs::new(u.to_string(), config.max_number_of_messages).await,
+        )),
+    };
+    let shutdown_rx = shutdown_tx.subscribe();
 
-        let daemon = Daemon::new(config, sqs, webhook, output_sqs);
-        handles.push(tokio::spawn(async move {
-            daemon.run(shutdown_rx, heartbeat_tx).await
-        }));
-    }
-
-    drop(heartbeat_tx);
+    let daemon = Daemon::new(config, sqs, webhook, output_sqs);
+    tokio::spawn(async move { daemon.run(shutdown_rx, heartbeat_tx).await });
 
     // graceful shutdown
     receive_shutdown_signal().await.unwrap();
-    info!("Start to shutdown workers.");
+    info!("Start to shutdown.");
+
     shutdown_tx.send(()).unwrap();
     let _ = heartbeat_rx.recv().await;
-    info!("Done");
+    info!("Terminated.");
 
     Ok(())
 }
