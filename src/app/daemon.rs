@@ -68,7 +68,7 @@ impl Daemon {
             let heartbeat_tx = worker_heartbeat_tx.clone();
 
             tokio::spawn(async move {
-                Self::process_message(sqs, webhook, output_sqs, rx, shutdown_rx, heartbeat_tx).await
+                Self::poll_process(sqs, webhook, output_sqs, rx, shutdown_rx, heartbeat_tx).await
             });
         }
 
@@ -116,7 +116,7 @@ impl Daemon {
         self.sqs.receive_messages().await
     }
 
-    async fn process_message(
+    async fn poll_process(
         sqs: Box<dyn Sqs + Send + Sync>,
         webhook: Box<dyn Webhook + Send + Sync>,
         output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
@@ -130,31 +130,43 @@ impl Daemon {
                     let message = result.unwrap();
                     info!("{:?}", message);
 
-                    let (is_successed, res) = webhook
-                        .post(&message.body.path, message.body.data.clone())
-                        .await?;
-                    if !is_successed {
-                        info!("Not succeeded: {:?}", &res);
-                        return Ok(());
-                    }
-
-                    if output_sqs.is_some() {
-                        output_sqs
-                            .as_ref()
-                            .unwrap()
-                            .send_message(MessageBody {
-                                path: message.body.path.clone(),
-                                data: res,
-                                context: message.body.context.clone(),
-                            })
-                            .await?;
-                    }
-
-                    sqs.delete_message(message.receipt_handle).await?;
+                    let _ = Self::process_message(message, &sqs, &webhook, &output_sqs).await;
                 }
                 _ = shutdown_rx.recv() => return Ok(()),
             }
         }
+    }
+
+    #[allow(clippy::borrowed_box)]
+    async fn process_message(
+        message: Message,
+        sqs: &Box<dyn Sqs + Send + Sync>,
+        webhook: &Box<dyn Webhook + Send + Sync>,
+        output_sqs: &Option<Box<dyn Sqs + Send + Sync>>,
+    ) -> Result<()> {
+        let (is_successed, res) = webhook
+            .post(&message.body.path, message.body.data.clone())
+            .await?;
+        if !is_successed {
+            info!("Not succeeded: {:?}", &res);
+            return Ok(());
+        }
+
+        if output_sqs.is_some() {
+            output_sqs
+                .as_ref()
+                .unwrap()
+                .send_message(MessageBody {
+                    path: message.body.path.clone(),
+                    data: res,
+                    context: message.body.context.clone(),
+                })
+                .await?;
+        }
+
+        sqs.delete_message(message.receipt_handle).await?;
+
+        Ok(())
     }
 
     #[allow(dead_code)]
