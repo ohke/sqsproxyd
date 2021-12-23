@@ -169,38 +169,6 @@ impl Daemon {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    async fn process(&self, messages: Vec<Message>) -> Result<()> {
-        for message in messages {
-            info!("{:?}", message);
-
-            let (is_successed, res) = self
-                .webhook
-                .post(&message.body.path, message.body.data.clone())
-                .await?;
-            if !is_successed {
-                info!("Not succeeded: {:?}", &res);
-                continue;
-            }
-
-            if self.output_sqs.is_some() {
-                self.output_sqs
-                    .as_ref()
-                    .unwrap()
-                    .send_message(MessageBody {
-                        path: message.body.path.clone(),
-                        data: res,
-                        context: message.body.context.clone(),
-                    })
-                    .await?;
-            }
-
-            self.sqs.delete_message(message.receipt_handle).await?;
-        }
-
-        Ok(())
-    }
-
     async fn sleep(&self) {
         info!("sleep");
         sleep(Duration::from_secs(self.config.sleep_seconds)).await;
@@ -210,38 +178,29 @@ impl Daemon {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::arg::*;
     use crate::domain::message::*;
     use crate::infra::sqs::*;
     use crate::infra::webhook::*;
     use mockall::predicate::*;
 
     #[tokio::test]
-    async fn test_process_1_message() {
+    async fn test_process_message_with_output() {
         dotenv::from_filename("env/test.env").expect("Not found env file.");
 
         let mut sqs = MockSqs::new();
-        sqs.expect_receive_messages().times(1).returning(|| {
-            Ok(Some(vec![Message {
-                receipt_handle: "receipt_handle".to_string(),
-                body: MessageBody {
-                    path: "/hoge".to_string(),
-                    data: "{\"key1\": 1}".to_string(),
-                    context: Some("".to_string()),
-                },
-            }]))
-        });
         sqs.expect_send_message().times(0).returning(|_| Ok(()));
         sqs.expect_delete_message()
             .with(eq("receipt_handle".to_string()))
             .times(1)
             .returning(|_| Ok(()));
+        let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
         let mut webhook = MockWebhook::new();
         webhook
             .expect_post()
             .times(1)
             .returning(|_, _| Ok((true, "result".to_string())));
+        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
@@ -255,104 +214,86 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
         output_sqs.expect_delete_message().times(0);
+        let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = Some(Box::new(output_sqs));
 
-        let config = Config::new(Arg::new_empty()).unwrap();
+        let message = Message {
+            receipt_handle: "receipt_handle".to_string(),
+            body: MessageBody {
+                path: "/hoge".to_string(),
+                data: "{\"key1\": 1}".to_string(),
+                context: Some("".to_string()),
+            },
+        };
 
-        let daemon = Daemon::new(
-            config,
-            Box::new(sqs),
-            Box::new(webhook),
-            Some(Box::new(output_sqs)),
-        );
-
-        let messages = daemon.poll().await.unwrap().unwrap();
-        assert_eq!(messages.len(), 1);
-        assert_eq!(
-            messages[0],
-            Message {
-                receipt_handle: "receipt_handle".to_string(),
-                body: MessageBody {
-                    path: "/hoge".to_string(),
-                    data: "{\"key1\": 1}".to_string(),
-                    context: Some("".to_string()),
-                },
-            }
-        );
-
-        daemon
-            .process(vec![Message {
-                body: MessageBody {
-                    path: "/hoge".to_string(),
-                    data: "{\"key1\": 1}".to_string(),
-                    context: Some("".to_string()),
-                },
-                receipt_handle: "receipt_handle".to_string(),
-            }])
+        Daemon::process_message(message, &sqs, &webhook, &output_sqs)
             .await
             .unwrap();
     }
 
     #[tokio::test]
-    async fn test_process_1_failed_message() {
+    async fn test_process_message_without_output() {
         dotenv::from_filename("env/test.env").expect("Not found env file.");
 
         let mut sqs = MockSqs::new();
-        sqs.expect_receive_messages().times(1).returning(|| {
-            Ok(Some(vec![Message {
-                receipt_handle: "receipt_handle".to_string(),
-                body: MessageBody {
-                    path: "/hoge".to_string(),
-                    data: "{\"key1\": 1}".to_string(),
-                    context: Some("".to_string()),
-                },
-            }]))
-        });
         sqs.expect_send_message().times(0).returning(|_| Ok(()));
+        sqs.expect_delete_message()
+            .with(eq("receipt_handle".to_string()))
+            .times(1)
+            .returning(|_| Ok(()));
+        let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
+
+        let mut webhook = MockWebhook::new();
+        webhook
+            .expect_post()
+            .times(1)
+            .returning(|_, _| Ok((true, "result".to_string())));
+        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
+
+        let output_sqs = None;
+
+        let message = Message {
+            receipt_handle: "receipt_handle".to_string(),
+            body: MessageBody {
+                path: "/hoge".to_string(),
+                data: "{\"key1\": 1}".to_string(),
+                context: Some("".to_string()),
+            },
+        };
+
+        Daemon::process_message(message, &sqs, &webhook, &output_sqs)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_process_message_if_failed_not_deleted() {
+        let mut sqs = MockSqs::new();
         sqs.expect_delete_message().times(0);
+        let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
         let mut webhook = MockWebhook::new();
         webhook
             .expect_post()
             .times(1)
             .returning(|_, _| Ok((false, "result".to_string())));
+        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
         output_sqs.expect_send_message().times(0);
         output_sqs.expect_delete_message().times(0);
+        let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = Some(Box::new(output_sqs));
 
-        let config = Config::new(Arg::new_empty()).unwrap();
+        let message = Message {
+            receipt_handle: "receipt_handle".to_string(),
+            body: MessageBody {
+                path: "/hoge".to_string(),
+                data: "{\"key1\": 1}".to_string(),
+                context: Some("".to_string()),
+            },
+        };
 
-        let daemon = Daemon::new(
-            config,
-            Box::new(sqs),
-            Box::new(webhook),
-            Some(Box::new(output_sqs)),
-        );
-
-        let messages = daemon.poll().await.unwrap().unwrap();
-        assert_eq!(messages.len(), 1);
-        assert_eq!(
-            messages[0],
-            Message {
-                receipt_handle: "receipt_handle".to_string(),
-                body: MessageBody {
-                    path: "/hoge".to_string(),
-                    data: "{\"key1\": 1}".to_string(),
-                    context: Some("".to_string()),
-                },
-            }
-        );
-
-        daemon
-            .process(vec![Message {
-                receipt_handle: "receipt_handle".to_string(),
-                body: MessageBody {
-                    path: "/hoge".to_string(),
-                    data: "{\"key1\": 1}".to_string(),
-                    context: Some("".to_string()),
-                },
-            }])
+        Daemon::process_message(message, &sqs, &webhook, &output_sqs)
             .await
             .unwrap();
     }

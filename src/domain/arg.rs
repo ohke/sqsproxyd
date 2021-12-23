@@ -21,19 +21,3 @@ pub struct Arg {
     #[structopt(long)]
     pub webhook_health_check_path: Option<String>,
 }
-
-#[cfg(test)]
-impl Arg {
-    pub fn new_empty() -> Self {
-        Arg {
-            sqs_url: None,
-            webhook_url: None,
-            output_sqs_url: None,
-            worker_concurrency: None,
-            connection_timeout: None,
-            max_number_of_messages: None,
-            sleep_seconds: None,
-            webhook_health_check_path: None,
-        }
-    }
-}
