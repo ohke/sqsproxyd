@@ -12,11 +12,7 @@ use tracing::info;
 
 use app::daemon::Daemon;
 use domain::{arg::Arg, config::Config};
-use infra::{
-    logger::setup_logger,
-    sqs::{AwsSqs, Sqs},
-    webhook::WebhookImpl,
-};
+use infra::{logger::setup_logger, sqs::AwsSqs, webhook::WebhookImpl};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -27,22 +23,15 @@ async fn main() -> Result<()> {
     let config = Config::new(arg)?;
 
     // run daemon
-    let (shutdown_tx, _) = broadcast::channel(1);
+    let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
     let (heartbeat_tx, mut heartbeat_rx) = mpsc::channel(1);
 
     let config = config.clone();
     let sqs =
         Box::new(AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await);
     let webhook = Box::new(WebhookImpl::new(config.clone()));
-    let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &config.output_sqs_url {
-        None => None,
-        Some(u) => Some(Box::new(
-            AwsSqs::new(u.to_string(), config.max_number_of_messages).await,
-        )),
-    };
-    let shutdown_rx = shutdown_tx.subscribe();
 
-    let daemon = Daemon::new(config, sqs, webhook, output_sqs);
+    let daemon = Daemon::new(config, sqs, webhook);
     tokio::spawn(async move { daemon.run(shutdown_rx, heartbeat_tx).await });
 
     // graceful shutdown

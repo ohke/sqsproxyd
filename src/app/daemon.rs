@@ -15,8 +15,6 @@ pub struct Daemon {
     config: Config,
     sqs: Box<dyn Sqs + Send + Sync>,
     webhook: Box<dyn Webhook + Send + Sync>,
-    #[allow(dead_code)]
-    output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
 }
 
 impl Daemon {
@@ -24,13 +22,11 @@ impl Daemon {
         config: Config,
         sqs: Box<dyn Sqs + Send + Sync>,
         webhook: Box<dyn Webhook + Send + Sync>,
-        output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Self {
         Daemon {
             config,
             sqs,
             webhook,
-            output_sqs,
         }
     }
 
