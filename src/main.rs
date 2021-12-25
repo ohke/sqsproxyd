@@ -27,11 +27,8 @@ async fn main() -> Result<()> {
     let (heartbeat_tx, mut heartbeat_rx) = mpsc::channel(1);
 
     let config = config.clone();
-    let sqs =
-        Box::new(AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await);
-    let webhook = Box::new(WebhookImpl::new(config.clone()));
 
-    let daemon = Daemon::new(config, sqs, webhook);
+    let daemon = Daemon::new(config).await;
     tokio::spawn(async move { daemon.run(shutdown_rx, heartbeat_tx).await });
 
     // graceful shutdown

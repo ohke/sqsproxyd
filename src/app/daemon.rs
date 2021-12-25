@@ -18,15 +18,13 @@ pub struct Daemon {
 }
 
 impl Daemon {
-    pub fn new(
-        config: Config,
-        sqs: Box<dyn Sqs + Send + Sync>,
-        webhook: Box<dyn Webhook + Send + Sync>,
-    ) -> Self {
+    pub async fn new(config: Config) -> Self {
         Daemon {
-            config,
-            sqs,
-            webhook,
+            config: config.clone(),
+            sqs: Box::new(
+                AwsSqs::new(config.sqs_url.to_string(), config.max_number_of_messages).await,
+            ),
+            webhook: Box::new(WebhookImpl::new(config.clone())),
         }
     }
 
