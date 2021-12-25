@@ -19,5 +19,5 @@ pub struct Arg {
     #[structopt(long)]
     pub sleep_seconds: Option<u64>,
     #[structopt(long)]
-    pub webhook_health_check_path: Option<String>,
+    pub webhook_health_check_url: Option<Url>,
 }

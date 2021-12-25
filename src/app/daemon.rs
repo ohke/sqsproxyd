@@ -95,9 +95,9 @@ impl Daemon {
     }
 
     async fn init(&self) -> Result<()> {
-        if let Some(path) = &self.config.webhook_health_check_path {
+        if let Some(_url) = &self.config.webhook_health_check_url {
             loop {
-                if self.webhook.get(path).await.is_ok() {
+                if self.webhook.get().await.is_ok() {
                     break;
                 }
             }

@@ -8,7 +8,7 @@ use std::time::Duration;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Webhook {
-    async fn get(&self, path: &str) -> Result<()>;
+    async fn get(&self) -> Result<()>;
     async fn post(&self, data: String) -> Result<(bool, String)>;
 }
 
@@ -24,9 +24,9 @@ impl WebhookImpl {
 
 #[async_trait]
 impl Webhook for WebhookImpl {
-    async fn get(&self, path: &str) -> Result<()> {
+    async fn get(&self) -> Result<()> {
         let client = reqwest::Client::new();
-        let url = self.config.webhook_url.clone().join(path)?;
+        let url = self.config.webhook_url.clone();
         let _ = client
             .get(url)
             .header(

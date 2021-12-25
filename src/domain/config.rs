@@ -17,7 +17,7 @@ pub struct Config {
     pub max_number_of_messages: usize,
     #[serde(default = "default_sleep_seconds")]
     pub sleep_seconds: u64,
-    pub webhook_health_check_path: Option<String>,
+    pub webhook_health_check_url: Option<Url>,
 }
 
 fn default_worker_concurrency() -> usize {
@@ -57,8 +57,8 @@ impl Config {
         if let Some(v) = arg.sleep_seconds {
             c.sleep_seconds = v;
         }
-        if let Some(v) = arg.webhook_health_check_path {
-            c.webhook_health_check_path = Some(v);
+        if let Some(v) = arg.webhook_health_check_url {
+            c.webhook_health_check_url = Some(v);
         }
 
         Ok(c)
