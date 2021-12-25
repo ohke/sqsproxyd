@@ -1,8 +1,6 @@
-use serde::{Deserialize, Serialize};
-
 #[derive(PartialEq, Debug)]
 pub struct Message {
-    pub body: MessageBody,
+    pub body: String,
     pub receipt_handle: String,
 }
 
@@ -13,11 +11,4 @@ impl From<aws_sdk_sqs::model::Message> for Message {
             receipt_handle: item.receipt_handle.unwrap(),
         }
     }
-}
-
-#[derive(Deserialize, Serialize, PartialEq, Debug)]
-pub struct MessageBody {
-    pub path: String,
-    pub data: String,
-    pub context: Option<String>,
 }

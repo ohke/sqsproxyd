@@ -7,7 +7,7 @@ use tokio::{
 use tracing::info;
 
 use crate::domain::config::Config;
-use crate::domain::message::{Message, MessageBody};
+use crate::domain::message::Message;
 use crate::infra::sqs::Sqs;
 use crate::infra::webhook::Webhook;
 
@@ -140,24 +140,14 @@ impl Daemon {
         webhook: &Box<dyn Webhook + Send + Sync>,
         output_sqs: &Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Result<()> {
-        let (is_successed, res) = webhook
-            .post(&message.body.path, message.body.data.clone())
-            .await?;
+        let (is_successed, res) = webhook.post(message.body.clone()).await?;
         if !is_successed {
             info!("Not succeeded: {:?}", &res);
             return Ok(());
         }
 
         if output_sqs.is_some() {
-            output_sqs
-                .as_ref()
-                .unwrap()
-                .send_message(MessageBody {
-                    path: message.body.path.clone(),
-                    data: res,
-                    context: message.body.context.clone(),
-                })
-                .await?;
+            output_sqs.as_ref().unwrap().send_message(res).await?;
         }
 
         sqs.delete_message(message.receipt_handle).await?;
@@ -195,18 +185,14 @@ mod tests {
         webhook
             .expect_post()
             .times(1)
-            .returning(|_, _| Ok((true, "result".to_string())));
+            .returning(|_| Ok((true, "result".to_string())));
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
         output_sqs
             .expect_send_message()
-            .with(eq(MessageBody {
-                path: "/hoge".to_string(),
-                data: "result".to_string(),
-                context: Some("".to_string()),
-            }))
+            .with(eq("result".to_string()))
             .times(1)
             .returning(|_| Ok(()));
         output_sqs.expect_delete_message().times(0);
@@ -214,11 +200,7 @@ mod tests {
 
         let message = Message {
             receipt_handle: "receipt_handle".to_string(),
-            body: MessageBody {
-                path: "/hoge".to_string(),
-                data: "{\"key1\": 1}".to_string(),
-                context: Some("".to_string()),
-            },
+            body: "{\"key1\": 1}".to_string(),
         };
 
         Daemon::process_message(message, &sqs, &webhook, &output_sqs)
@@ -242,18 +224,14 @@ mod tests {
         webhook
             .expect_post()
             .times(1)
-            .returning(|_, _| Ok((true, "result".to_string())));
+            .returning(|_| Ok((true, "result".to_string())));
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let output_sqs = None;
 
         let message = Message {
             receipt_handle: "receipt_handle".to_string(),
-            body: MessageBody {
-                path: "/hoge".to_string(),
-                data: "{\"key1\": 1}".to_string(),
-                context: Some("".to_string()),
-            },
+            body: "{\"key1\": 1}".to_string(),
         };
 
         Daemon::process_message(message, &sqs, &webhook, &output_sqs)
@@ -271,7 +249,7 @@ mod tests {
         webhook
             .expect_post()
             .times(1)
-            .returning(|_, _| Ok((false, "result".to_string())));
+            .returning(|_| Ok((false, "result".to_string())));
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
@@ -282,11 +260,7 @@ mod tests {
 
         let message = Message {
             receipt_handle: "receipt_handle".to_string(),
-            body: MessageBody {
-                path: "/hoge".to_string(),
-                data: "{\"key1\": 1}".to_string(),
-                context: Some("".to_string()),
-            },
+            body: "{\"key1\": 1}".to_string(),
         };
 
         Daemon::process_message(message, &sqs, &webhook, &output_sqs)

@@ -9,7 +9,7 @@ use std::time::Duration;
 #[async_trait]
 pub trait Webhook {
     async fn get(&self, path: &str) -> Result<()>;
-    async fn post(&self, path: &str, data: String) -> Result<(bool, String)>;
+    async fn post(&self, data: String) -> Result<(bool, String)>;
 }
 
 pub struct WebhookImpl {
@@ -39,11 +39,10 @@ impl Webhook for WebhookImpl {
         Ok(())
     }
 
-    async fn post(&self, path: &str, data: String) -> Result<(bool, String)> {
+    async fn post(&self, data: String) -> Result<(bool, String)> {
         let client = reqwest::Client::new();
-        let url = self.config.webhook_url.clone().join(path)?;
         let res = client
-            .post(url)
+            .post(self.config.webhook_url.clone())
             .header(
                 reqwest::header::USER_AGENT,
                 format!("sqsdproxy/{}", env!("CARGO_PKG_VERSION")),
