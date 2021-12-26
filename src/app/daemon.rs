@@ -1,5 +1,6 @@
 use crate::{AwsSqs, WebhookImpl};
 use anyhow::Result;
+use std::borrow::Borrow;
 use tokio::{
     sync::{broadcast, mpsc},
     time::{sleep, Duration},
@@ -35,9 +36,11 @@ impl Daemon {
     ) -> Result<()> {
         info!("{:?}", self.config);
 
-        tokio::select! {
-            result = self.init() => result.unwrap(),
-            _ = shutdown_rx.recv() => return Ok(()),
+        if let Some(_url) = &self.config.webhook_health_check_url {
+            tokio::select! {
+                result = Self::health_check(self.webhook.borrow()) => result.unwrap(),
+                _ = shutdown_rx.recv() => return Ok(()),
+            }
         }
 
         // create workers
@@ -94,12 +97,10 @@ impl Daemon {
         }
     }
 
-    async fn init(&self) -> Result<()> {
-        if let Some(_url) = &self.config.webhook_health_check_url {
-            loop {
-                if self.webhook.get().await.is_ok() {
-                    break;
-                }
+    async fn health_check(webhook: &'_ (dyn Webhook + Send + Sync)) -> Result<()> {
+        loop {
+            if webhook.get().await.is_ok() {
+                break;
             }
         }
 
@@ -165,7 +166,9 @@ mod tests {
     use crate::domain::message::*;
     use crate::infra::sqs::*;
     use crate::infra::webhook::*;
+    use anyhow::anyhow;
     use mockall::predicate::*;
+    use std::borrow::Borrow;
 
     #[tokio::test]
     async fn test_process_message_with_output() {
@@ -264,5 +267,19 @@ mod tests {
         Daemon::process_message(message, &sqs, &webhook, &output_sqs)
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_health_check() {
+        let mut webhook = MockWebhook::new();
+        webhook
+            .expect_get()
+            .times(3)
+            .returning(|| Err(anyhow!("Error")))
+            .times(1)
+            .returning(|| Ok(()));
+        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
+
+        Daemon::health_check(webhook.borrow()).await.unwrap();
     }
 }
