@@ -125,18 +125,17 @@ impl Daemon {
                     let message = result.unwrap();
                     info!("{:?}", message);
 
-                    let _ = Self::process_message(message, &sqs, &webhook, &output_sqs).await;
+                    let _ = Self::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs).await;
                 }
                 _ = shutdown_rx.recv() => return Ok(()),
             }
         }
     }
 
-    #[allow(clippy::borrowed_box)]
     async fn process_message(
         message: Message,
-        sqs: &Box<dyn Sqs + Send + Sync>,
-        webhook: &Box<dyn Webhook + Send + Sync>,
+        sqs: &'_ (dyn Sqs + Send + Sync),
+        webhook: &'_ (dyn Webhook + Send + Sync),
         output_sqs: &Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Result<()> {
         let (is_successed, res) = webhook.post(message.body.clone()).await?;
@@ -204,7 +203,7 @@ mod tests {
             body: "{\"key1\": 1}".to_string(),
         };
 
-        Daemon::process_message(message, &sqs, &webhook, &output_sqs)
+        Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
             .await
             .unwrap();
     }
@@ -235,7 +234,7 @@ mod tests {
             body: "{\"key1\": 1}".to_string(),
         };
 
-        Daemon::process_message(message, &sqs, &webhook, &output_sqs)
+        Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
             .await
             .unwrap();
     }
@@ -264,7 +263,7 @@ mod tests {
             body: "{\"key1\": 1}".to_string(),
         };
 
-        Daemon::process_message(message, &sqs, &webhook, &output_sqs)
+        Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
             .await
             .unwrap();
     }
