@@ -5,7 +5,7 @@ use tokio::{
     sync::{broadcast, mpsc},
     time::{sleep, Duration},
 };
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::domain::config::Config;
 use crate::domain::message::Message;
@@ -125,7 +125,11 @@ impl Daemon {
                     let message = result.unwrap();
                     info!("{:?}", message);
 
-                    let _ = Self::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs).await;
+                    if message.check_hash() {
+                        let _ = Self::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs).await;
+                    } else {
+                        warn!("Mismatch message MD5 digest.");
+                    }
                 }
                 _ = shutdown_rx.recv() => return Ok(()),
             }
@@ -201,6 +205,7 @@ mod tests {
         let message = Message {
             receipt_handle: "receipt_handle".to_string(),
             body: "{\"key1\": 1}".to_string(),
+            md5_of_body: "dummy".to_string(),
         };
 
         Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
@@ -232,6 +237,7 @@ mod tests {
         let message = Message {
             receipt_handle: "receipt_handle".to_string(),
             body: "{\"key1\": 1}".to_string(),
+            md5_of_body: "dummy".to_string(),
         };
 
         Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
@@ -261,6 +267,7 @@ mod tests {
         let message = Message {
             receipt_handle: "receipt_handle".to_string(),
             body: "{\"key1\": 1}".to_string(),
+            md5_of_body: "dummy".to_string(),
         };
 
         Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)

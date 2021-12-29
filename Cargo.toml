@@ -13,6 +13,7 @@ aws-config = "0.2.0"
 aws-sdk-sqs = "0.2.0"
 dotenv = "0.15"
 envy = "0.4"
+md5 = "0.7"
 mockall = "0.10"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -23,7 +24,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = { version = "2.2", features = ["serde"] }
 
-#[dev-dependencies.cargo-husky]
-#version = "1"
-#default-features = false
-#features = ["precommit-hook", "run-cargo-fmt", "run-cargo-clippy", "run-cargo-test"]
+[dev-dependencies.cargo-husky]
+version = "1"
+default-features = false
+features = ["precommit-hook", "run-cargo-fmt", "run-cargo-clippy", "run-cargo-test"]
