@@ -18,6 +18,8 @@ pub struct Config {
     #[serde(default = "default_sleep_seconds")]
     pub sleep_seconds: u64,
     pub webhook_health_check_url: Option<Url>,
+    #[serde(default = "default_content_type")]
+    pub content_type: String,
 }
 
 fn default_worker_concurrency() -> usize {
@@ -31,6 +33,12 @@ fn default_max_number_of_messages() -> usize {
 fn default_connection_timeout() -> u64 {
     30
 }
+
+fn default_sleep_seconds() -> u64 {
+    1
+}
+
+fn default_content_type() -> String { "application/json".to_string() }
 
 impl Config {
     pub fn new(arg: Arg) -> Result<Self> {
@@ -60,11 +68,10 @@ impl Config {
         if let Some(v) = arg.webhook_health_check_url {
             c.webhook_health_check_url = Some(v);
         }
+        if let Some(v) = arg.content_type {
+            c.content_type = v;
+        }
 
         Ok(c)
     }
-}
-
-fn default_sleep_seconds() -> u64 {
-    1
 }

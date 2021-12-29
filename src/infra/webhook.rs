@@ -47,6 +47,10 @@ impl Webhook for WebhookImpl {
                 reqwest::header::USER_AGENT,
                 format!("sqsdproxy/{}", env!("CARGO_PKG_VERSION")),
             )
+            .header(
+                reqwest::header::CONTENT_TYPE,
+                &self.config.content_type,
+            )
             .timeout(Duration::from_secs(self.config.connection_timeout))
             .body(data)
             .send()
