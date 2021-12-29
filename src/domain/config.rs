@@ -38,7 +38,9 @@ fn default_sleep_seconds() -> u64 {
     1
 }
 
-fn default_content_type() -> String { "application/json".to_string() }
+fn default_content_type() -> String {
+    "application/json".to_string()
+}
 
 impl Config {
     pub fn new(arg: Arg) -> Result<Self> {
