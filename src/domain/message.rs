@@ -5,6 +5,7 @@ pub struct Message {
     pub body: String,
     pub receipt_handle: String,
     pub md5_of_body: String,
+    pub message_id: String,
 }
 
 impl Message {
@@ -20,6 +21,7 @@ impl From<aws_sdk_sqs::model::Message> for Message {
             body: item.body.unwrap(),
             receipt_handle: item.receipt_handle.unwrap(),
             md5_of_body: item.md5_of_body.unwrap(),
+            message_id: item.message_id.unwrap(),
         }
     }
 }
@@ -33,7 +35,8 @@ mod tests {
         let message = Message {
             body: "hoge".to_string(),
             receipt_handle: "dummy".to_string(),
-            md5_of_body: "ea703e7aa1efda0064eaa507d9e8ab7e".to_string(), //  md5 -s 'hoge'
+            md5_of_body: "ea703e7aa1efda0064eaa507d9e8ab7e".to_string(), //  md5 -s 'hoge',
+            message_id: "dummy".to_string(),
         };
 
         assert_eq!(true, message.check_hash());
@@ -45,6 +48,7 @@ mod tests {
             body: "hoge".to_string(),
             receipt_handle: "dummy".to_string(),
             md5_of_body: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".to_string(),
+            message_id: "dummy".to_string(),
         };
 
         assert_eq!(false, message.check_hash());

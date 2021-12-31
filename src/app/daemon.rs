@@ -142,7 +142,9 @@ impl Daemon {
         webhook: &'_ (dyn Webhook + Send + Sync),
         output_sqs: &Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Result<()> {
-        let (is_successed, res) = webhook.post(message.body.clone()).await?;
+        let (is_successed, res) = webhook
+            .post(message.body.clone(), &message.message_id)
+            .await?;
         if !is_successed {
             info!("Not succeeded: {:?}", &res);
             return Ok(());
@@ -186,10 +188,10 @@ mod tests {
         let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
         let mut webhook = MockWebhook::new();
-        webhook
-            .expect_post()
-            .times(1)
-            .returning(|_| Ok((true, "result".to_string())));
+        webhook.expect_post().times(1).returning(|_, message_id| {
+            assert_eq!(message_id, "message_id");
+            Ok((true, "result".to_string()))
+        });
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
@@ -206,6 +208,7 @@ mod tests {
             receipt_handle: "receipt_handle".to_string(),
             body: "{\"key1\": 1}".to_string(),
             md5_of_body: "dummy".to_string(),
+            message_id: "message_id".to_string(),
         };
 
         Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
@@ -226,10 +229,10 @@ mod tests {
         let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
         let mut webhook = MockWebhook::new();
-        webhook
-            .expect_post()
-            .times(1)
-            .returning(|_| Ok((true, "result".to_string())));
+        webhook.expect_post().times(1).returning(|_, message_id| {
+            assert_eq!(message_id, "message_id");
+            Ok((true, "result".to_string()))
+        });
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let output_sqs = None;
@@ -238,6 +241,7 @@ mod tests {
             receipt_handle: "receipt_handle".to_string(),
             body: "{\"key1\": 1}".to_string(),
             md5_of_body: "dummy".to_string(),
+            message_id: "message_id".to_string(),
         };
 
         Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
@@ -252,10 +256,10 @@ mod tests {
         let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
         let mut webhook = MockWebhook::new();
-        webhook
-            .expect_post()
-            .times(1)
-            .returning(|_| Ok((false, "result".to_string())));
+        webhook.expect_post().times(1).returning(|_, message_id| {
+            assert_eq!(message_id, "message_id");
+            Ok((false, "result".to_string()))
+        });
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
@@ -268,6 +272,7 @@ mod tests {
             receipt_handle: "receipt_handle".to_string(),
             body: "{\"key1\": 1}".to_string(),
             md5_of_body: "dummy".to_string(),
+            message_id: "message_id".to_string(),
         };
 
         Daemon::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs)
