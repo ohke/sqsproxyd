@@ -1,15 +1,26 @@
 version: '3.8'
 services:
-  release:
-    image: sqsproxyd
+  builder:
+    image: sqsproxyd:builder
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: builder
+  release-builder:
+    image: sqsproxyd:release-builder
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: release-builder
   dev:
-    image: rust:1.57
-    working_dir: /usr/src/sqsproxyd
+    image: sqsproxyd:dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
     volumes:
       - .:/usr/src/sqsproxyd
+    command: bash
     tty: true
     depends_on:
       - api
