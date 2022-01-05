@@ -18,6 +18,8 @@ pub struct Config {
     #[serde(default = "default_sleep_seconds")]
     pub sleep_seconds: u64,
     pub webhook_health_check_url: Option<Url>,
+    #[serde(default = "default_webhook_health_check_interval_seconds")]
+    pub webhook_health_check_interval_seconds: u64,
     #[serde(default = "default_content_type")]
     pub content_type: String,
 }
@@ -35,6 +37,10 @@ fn default_connection_timeout() -> u64 {
 }
 
 fn default_sleep_seconds() -> u64 {
+    1
+}
+
+fn default_webhook_health_check_interval_seconds() -> u64 {
     1
 }
 
@@ -69,6 +75,9 @@ impl Config {
         }
         if let Some(v) = arg.webhook_health_check_url {
             c.webhook_health_check_url = Some(v);
+        }
+        if let Some(v) = arg.webhook_health_check_interval_seconds {
+            c.webhook_health_check_interval_seconds = v;
         }
         if let Some(v) = arg.content_type {
             c.content_type = v;

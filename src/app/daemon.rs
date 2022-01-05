@@ -38,7 +38,7 @@ impl Daemon {
 
         if let Some(_url) = &self.config.webhook_health_check_url {
             tokio::select! {
-                result = Self::health_check(self.webhook.borrow()) => result.unwrap(),
+                result = Self::health_check(self.webhook.borrow(), self.config.webhook_health_check_interval_seconds) => result.unwrap(),
                 _ = shutdown_rx.recv() => return Ok(()),
             }
         }
@@ -78,14 +78,14 @@ impl Daemon {
                     let messages = result.unwrap();
                     if let Some(messages) = messages {
                         if messages.is_empty() {
-                            self.sleep().await;
+                            Self::sleep(self.config.sleep_seconds).await;
                         } else {
                             for message in messages {
                                 tx.send(message).await?;
                             }
                         }
                     } else {
-                        self.sleep().await;
+                        Self::sleep(self.config.sleep_seconds).await;
                     }
                 }
                 _ = shutdown_rx.recv() => {
@@ -97,11 +97,13 @@ impl Daemon {
         }
     }
 
-    async fn health_check(webhook: &'_ (dyn Webhook + Send + Sync)) -> Result<()> {
+    async fn health_check(webhook: &'_ (dyn Webhook + Send + Sync), seconds: u64) -> Result<()> {
         loop {
             if webhook.get().await.is_ok() {
                 break;
             }
+
+            Self::sleep(seconds).await;
         }
 
         Ok(())
@@ -159,9 +161,9 @@ impl Daemon {
         Ok(())
     }
 
-    async fn sleep(&self) {
+    async fn sleep(seconds: u64) {
         info!("sleep");
-        sleep(Duration::from_secs(self.config.sleep_seconds)).await;
+        sleep(Duration::from_secs(seconds)).await;
     }
 }
 
@@ -291,6 +293,6 @@ mod tests {
             .returning(|| Ok(()));
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
-        Daemon::health_check(webhook.borrow()).await.unwrap();
+        Daemon::health_check(webhook.borrow(), 1).await.unwrap();
     }
 }
