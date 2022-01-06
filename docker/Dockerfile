@@ -22,6 +22,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && \
 COPY . .
 RUN cargo build --release
 
+# hadolint ignore=DL3006
 FROM gcr.io/distroless/cc AS sqsproxyd
 
 COPY --from=release-builder /usr/src/sqsproxyd/target/release/sqsproxyd /bin/sqsproxyd
