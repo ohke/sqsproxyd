@@ -7,4 +7,4 @@ jobs:
       - uses: hadolint/hadolint-action@v1.6.0
         with:
           dockerfile: docker/Dockerfile
-          failure-threshold: info
+          failure-threshold: warning
