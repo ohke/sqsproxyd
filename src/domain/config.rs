@@ -22,6 +22,7 @@ pub struct Config {
     pub webhook_health_check_interval_seconds: u64,
     #[serde(default = "default_content_type")]
     pub content_type: String,
+    pub region: Option<String>,
 }
 
 fn default_worker_concurrency() -> usize {
@@ -81,6 +82,9 @@ impl Config {
         }
         if let Some(v) = arg.content_type {
             c.content_type = v;
+        }
+        if let Some(v) = arg.region {
+            c.region = Some(v);
         }
 
         Ok(c)

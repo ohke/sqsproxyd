@@ -24,4 +24,6 @@ pub struct Arg {
     pub webhook_health_check_interval_seconds: Option<u64>,
     #[structopt(long)]
     pub content_type: Option<String>,
+    #[structopt(long)]
+    pub region: Option<String>,
 }

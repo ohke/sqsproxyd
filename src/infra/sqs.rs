@@ -5,6 +5,7 @@ use aws_sdk_sqs::Client;
 use crate::domain::message::Message;
 
 use crate::infra::aws::load_aws_config;
+use crate::Config;
 #[cfg(test)]
 use mockall::automock;
 
@@ -23,11 +24,11 @@ pub struct AwsSqs {
 }
 
 impl AwsSqs {
-    pub async fn new(url: String, max_number_of_messages: usize) -> Self {
+    pub async fn new(config: &Config) -> Self {
         AwsSqs {
-            client: Client::new(&load_aws_config().await),
-            url,
-            max_number_of_messages,
+            client: Client::new(&load_aws_config(config).await),
+            url: config.webhook_url.to_string(),
+            max_number_of_messages: config.max_number_of_messages,
         }
     }
 }
