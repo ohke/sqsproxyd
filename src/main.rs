@@ -46,8 +46,8 @@ async fn receive_shutdown_signal() -> Result<()> {
     let mut sigint = signal(SignalKind::interrupt())?;
     let mut sigterm = signal(SignalKind::terminate())?;
     tokio::select! {
-        _ = sigint.recv() => println!("SIGINT"),
-        _ = sigterm.recv() => println!("SIGTERM"),
+        _ = sigint.recv() => info!("Receives SIGINT signal."),
+        _ = sigterm.recv() => info!("Receives SIGTERM signal.")
     }
     Ok(())
 }
