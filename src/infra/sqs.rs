@@ -24,10 +24,10 @@ pub struct AwsSqs {
 }
 
 impl AwsSqs {
-    pub async fn new(config: &Config) -> Self {
+    pub async fn new(url: String, config: &Config) -> Self {
         AwsSqs {
             client: Client::new(&load_aws_config(config).await),
-            url: config.webhook_url.to_string(),
+            url,
             max_number_of_messages: config.max_number_of_messages,
         }
     }

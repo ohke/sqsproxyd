@@ -22,7 +22,7 @@ impl Daemon {
     pub async fn new(config: Config) -> Self {
         Daemon {
             config: config.clone(),
-            sqs: Box::new(AwsSqs::new(&config).await),
+            sqs: Box::new(AwsSqs::new(config.sqs_url.to_string(), &config).await),
             webhook: Box::new(WebhookImpl::new(config.clone())),
         }
     }
@@ -48,11 +48,11 @@ impl Daemon {
 
         for _ in 0..self.config.worker_concurrency {
             let config = self.config.clone();
-            let sqs = Box::new(AwsSqs::new(&config).await);
+            let sqs = Box::new(AwsSqs::new(config.sqs_url.to_string(), &config).await);
             let webhook = Box::new(WebhookImpl::new(self.config.clone()));
             let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &self.config.output_sqs_url {
                 None => None,
-                Some(_u) => Some(Box::new(AwsSqs::new(&config).await)),
+                Some(u) => Some(Box::new(AwsSqs::new(u.to_string(), &config).await)),
             };
             let rx = rx.clone();
             let shutdown_rx = worker_shutdown_tx.subscribe();
