@@ -22,7 +22,14 @@ pub struct Config {
     pub webhook_health_check_interval_seconds: u64,
     #[serde(default = "default_content_type")]
     pub content_type: String,
+    #[serde(skip)]
     pub region: Option<String>,
+    #[serde(skip)]
+    pub aws_access_key_id: Option<String>,
+    #[serde(skip)]
+    pub aws_secret_access_key: Option<String>,
+    #[serde(skip)]
+    pub aws_session_token: Option<String>,
 }
 
 fn default_worker_concurrency() -> usize {
@@ -85,6 +92,15 @@ impl Config {
         }
         if let Some(v) = arg.region {
             c.region = Some(v);
+        }
+        if let Some(v) = arg.aws_access_key_id {
+            c.aws_access_key_id = Some(v);
+        }
+        if let Some(v) = arg.aws_secret_access_key {
+            c.aws_secret_access_key = Some(v);
+        }
+        if let Some(v) = arg.aws_session_token {
+            c.aws_session_token = Some(v);
         }
 
         Ok(c)

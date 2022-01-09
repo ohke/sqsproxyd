@@ -26,4 +26,10 @@ pub struct Arg {
     pub content_type: Option<String>,
     #[structopt(long)]
     pub region: Option<String>,
+    #[structopt(long)]
+    pub aws_access_key_id: Option<String>,
+    #[structopt(long)]
+    pub aws_secret_access_key: Option<String>,
+    #[structopt(long)]
+    pub aws_session_token: Option<String>,
 }

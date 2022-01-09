@@ -1497,6 +1497,7 @@ dependencies = [
  "async-trait",
  "aws-config",
  "aws-sdk-sqs",
+ "aws-types",
  "cargo-husky",
  "dotenv",
  "envy",

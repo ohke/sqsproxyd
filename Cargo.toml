@@ -11,6 +11,7 @@ async-channel = "1.6"
 async-trait = "0.1"
 aws-config = "0.4.0"
 aws-sdk-sqs = "0.4.0"
+aws-types = { version = "0.4.0", features = ["hardcoded-credentials"]}
 dotenv = "0.15"
 envy = "0.4"
 md5 = "0.7"
