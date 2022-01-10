@@ -2,6 +2,7 @@ use crate::domain::arg::Arg;
 use anyhow::Result;
 use envy;
 use serde::Deserialize;
+use std::env;
 use url::Url;
 
 #[derive(Clone, Deserialize, Debug)]
@@ -61,6 +62,11 @@ fn default_content_type() -> String {
 impl Config {
     pub fn new(arg: Arg) -> Result<Self> {
         let mut c = envy::prefixed("SQSPROXYD_").from_env::<Config>()?;
+
+        c.aws_endpoint = match env::var("AWS_ENDPOINT") {
+            Ok(v) => Some(v),
+            Err(_) => None,
+        };
 
         if let Some(v) = arg.sqs_url {
             c.sqs_url = v;
