@@ -5,7 +5,7 @@ use aws_types::Credentials;
 
 pub async fn load_aws_config(config: &Config) -> AwsConfig {
     let loader = aws_config::from_env();
-    let loader = match &config.region {
+    let loader = match &config.aws_region {
         None => loader,
         Some(region) => loader.region(Region::new(region.clone())),
     };

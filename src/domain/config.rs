@@ -2,11 +2,18 @@ use crate::domain::arg::Arg;
 use anyhow::Result;
 use envy;
 use serde::Deserialize;
-use std::env;
 use url::Url;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
+    #[serde(skip)]
+    pub aws_access_key_id: Option<String>,
+    #[serde(skip)]
+    pub aws_secret_access_key: Option<String>,
+    #[serde(skip)]
+    pub aws_session_token: Option<String>,
+    pub aws_region: Option<String>,
+    pub aws_endpoint: Option<String>,
     pub sqs_url: Url,
     pub webhook_url: Url,
     pub output_sqs_url: Option<Url>,
@@ -23,16 +30,6 @@ pub struct Config {
     pub webhook_health_check_interval_seconds: u64,
     #[serde(default = "default_content_type")]
     pub content_type: String,
-    #[serde(skip)]
-    pub region: Option<String>,
-    #[serde(skip)]
-    pub aws_access_key_id: Option<String>,
-    #[serde(skip)]
-    pub aws_secret_access_key: Option<String>,
-    #[serde(skip)]
-    pub aws_session_token: Option<String>,
-    #[serde(skip)]
-    pub aws_endpoint: Option<String>,
 }
 
 fn default_worker_concurrency() -> usize {
@@ -62,11 +59,6 @@ fn default_content_type() -> String {
 impl Config {
     pub fn new(arg: Arg) -> Result<Self> {
         let mut c = envy::prefixed("SQSPROXYD_").from_env::<Config>()?;
-
-        c.aws_endpoint = match env::var("AWS_ENDPOINT") {
-            Ok(v) => Some(v),
-            Err(_) => None,
-        };
 
         if let Some(v) = arg.sqs_url {
             c.sqs_url = v;
@@ -98,8 +90,8 @@ impl Config {
         if let Some(v) = arg.content_type {
             c.content_type = v;
         }
-        if let Some(v) = arg.region {
-            c.region = Some(v);
+        if let Some(v) = arg.aws_region {
+            c.aws_region = Some(v);
         }
         if let Some(v) = arg.aws_access_key_id {
             c.aws_access_key_id = Some(v);
