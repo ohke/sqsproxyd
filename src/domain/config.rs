@@ -30,6 +30,8 @@ pub struct Config {
     pub aws_secret_access_key: Option<String>,
     #[serde(skip)]
     pub aws_session_token: Option<String>,
+    #[serde(skip)]
+    pub aws_endpoint: Option<String>,
 }
 
 fn default_worker_concurrency() -> usize {
@@ -101,6 +103,9 @@ impl Config {
         }
         if let Some(v) = arg.aws_session_token {
             c.aws_session_token = Some(v);
+        }
+        if let Some(v) = arg.aws_endpoint {
+            c.aws_endpoint = Some(v);
         }
 
         Ok(c)

@@ -1501,6 +1501,7 @@ dependencies = [
  "cargo-husky",
  "dotenv",
  "envy",
+ "http",
  "md5",
  "mockall",
  "reqwest",

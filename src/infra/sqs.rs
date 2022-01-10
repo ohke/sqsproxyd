@@ -1,6 +1,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use aws_sdk_sqs::Client;
+use aws_sdk_sqs::{Client, Endpoint};
+use http::Uri;
+use std::str::FromStr;
 
 use crate::domain::message::Message;
 
@@ -25,8 +27,18 @@ pub struct AwsSqs {
 
 impl AwsSqs {
     pub async fn new(url: String, config: &Config) -> Self {
+        let client = match &config.aws_endpoint {
+            None => Client::new(&load_aws_config(config).await),
+            Some(aws_endpoint) => {
+                let aws_config = load_aws_config(config).await;
+                let sqs_config = aws_sdk_sqs::config::Builder::from(&aws_config)
+                    .endpoint_resolver(Endpoint::immutable(Uri::from_str(aws_endpoint).unwrap()))
+                    .build();
+                aws_sdk_sqs::Client::from_conf(sqs_config)
+            }
+        };
         AwsSqs {
-            client: Client::new(&load_aws_config(config).await),
+            client,
             url,
             max_number_of_messages: config.max_number_of_messages,
         }

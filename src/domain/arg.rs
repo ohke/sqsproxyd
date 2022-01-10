@@ -32,4 +32,6 @@ pub struct Arg {
     pub aws_secret_access_key: Option<String>,
     #[structopt(long)]
     pub aws_session_token: Option<String>,
+    #[structopt(long)]
+    pub aws_endpoint: Option<String>,
 }
