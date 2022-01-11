@@ -1,112 +1,52 @@
-use crate::domain::arg::Arg;
-use anyhow::Result;
-use envy;
-use serde::Deserialize;
+use structopt::StructOpt;
 use url::Url;
 
-#[derive(Clone, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, StructOpt)]
+#[structopt(name = "sqsproxyd")]
 pub struct Config {
-    #[serde(skip)]
+    #[structopt(long)]
     pub aws_access_key_id: Option<String>,
-    #[serde(skip)]
+    #[structopt(long)]
     pub aws_secret_access_key: Option<String>,
-    #[serde(skip)]
+    #[structopt(long)]
     pub aws_session_token: Option<String>,
+    #[structopt(long, env = "SQSPROXYD_AWS_REGION")]
     pub aws_region: Option<String>,
+    #[structopt(long, env = "SQSPROXYD_AWS_ENDPOINT")]
     pub aws_endpoint: Option<String>,
+    #[structopt(long, env = "SQSPROXYD_SQS_URL")]
     pub sqs_url: Url,
+    #[structopt(long, env = "SQSPROXYD_WEBHOOK_URL")]
     pub webhook_url: Url,
+    #[structopt(long, env = "SQSPROXYD_OUTPUT_SQS_URL")]
     pub output_sqs_url: Option<Url>,
-    #[serde(default = "default_worker_concurrency")]
+    #[structopt(long, env = "SQSPROXYD_WORKER_CONCURRENCY", default_value = "1")]
     pub worker_concurrency: usize,
-    #[serde(default = "default_connection_timeout")]
+    #[structopt(long, env = "SQSPROXYD_CONNECTION_TIMEOUT", default_value = "30")]
     pub connection_timeout: u64,
-    #[serde(default = "default_max_number_of_messages")]
+    #[structopt(long, env = "SQSPROXYD_MAX_NUMBER_OF_MESSAGES", default_value = "1")]
     pub max_number_of_messages: usize,
-    #[serde(default = "default_sleep_seconds")]
+    #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
     pub sleep_seconds: u64,
+    #[structopt(long, env = "SQSPROXYD_WEBHOOK_HEALTH_CHECK_URL")]
     pub webhook_health_check_url: Option<Url>,
-    #[serde(default = "default_webhook_health_check_interval_seconds")]
+    #[structopt(
+        long,
+        env = "SQSPROXYD_WEBHOOK_HEALTH_CHECK_INTERVAL_SECONDS",
+        default_value = "1"
+    )]
     pub webhook_health_check_interval_seconds: u64,
-    #[serde(default = "default_content_type")]
+    #[structopt(
+        long,
+        env = "SQSPROXYD_CONTENT_TYPE",
+        default_value = "application/json"
+    )]
     pub content_type: String,
 }
 
-fn default_worker_concurrency() -> usize {
-    1
-}
-
-fn default_max_number_of_messages() -> usize {
-    1
-}
-
-fn default_connection_timeout() -> u64 {
-    30
-}
-
-fn default_sleep_seconds() -> u64 {
-    1
-}
-
-fn default_webhook_health_check_interval_seconds() -> u64 {
-    1
-}
-
-fn default_content_type() -> String {
-    "application/json".to_string()
-}
-
 impl Config {
-    pub fn new(arg: Arg) -> Result<Self> {
-        let mut c = envy::prefixed("SQSPROXYD_").from_env::<Config>()?;
-
-        if let Some(v) = arg.sqs_url {
-            c.sqs_url = v;
-        }
-        if let Some(v) = arg.webhook_url {
-            c.webhook_url = v;
-        }
-        if let Some(v) = arg.output_sqs_url {
-            c.output_sqs_url = Some(v);
-        }
-        if let Some(v) = arg.worker_concurrency {
-            c.worker_concurrency = v;
-        }
-        if let Some(v) = arg.connection_timeout {
-            c.connection_timeout = v;
-        }
-        if let Some(v) = arg.max_number_of_messages {
-            c.max_number_of_messages = v;
-        }
-        if let Some(v) = arg.sleep_seconds {
-            c.sleep_seconds = v;
-        }
-        if let Some(v) = arg.webhook_health_check_url {
-            c.webhook_health_check_url = Some(v);
-        }
-        if let Some(v) = arg.webhook_health_check_interval_seconds {
-            c.webhook_health_check_interval_seconds = v;
-        }
-        if let Some(v) = arg.content_type {
-            c.content_type = v;
-        }
-        if let Some(v) = arg.aws_region {
-            c.aws_region = Some(v);
-        }
-        if let Some(v) = arg.aws_access_key_id {
-            c.aws_access_key_id = Some(v);
-        }
-        if let Some(v) = arg.aws_secret_access_key {
-            c.aws_secret_access_key = Some(v);
-        }
-        if let Some(v) = arg.aws_session_token {
-            c.aws_session_token = Some(v);
-        }
-        if let Some(v) = arg.aws_endpoint {
-            c.aws_endpoint = Some(v);
-        }
-
-        Ok(c)
+    pub fn new() -> Self {
+        Self::from_args()
     }
 }
 
@@ -144,24 +84,7 @@ mod test {
     fn config_default_is_env() {
         set_env_vars();
 
-        let config = Config::new(Arg {
-            aws_access_key_id: None,
-            aws_secret_access_key: None,
-            aws_session_token: None,
-            aws_region: None,
-            aws_endpoint: None,
-            sqs_url: None,
-            webhook_url: None,
-            output_sqs_url: None,
-            worker_concurrency: None,
-            connection_timeout: None,
-            max_number_of_messages: None,
-            sleep_seconds: None,
-            webhook_health_check_url: None,
-            webhook_health_check_interval_seconds: None,
-            content_type: None,
-        })
-        .unwrap();
+        let config = Config::new();
 
         assert_eq!(
             config,
@@ -191,71 +114,6 @@ mod test {
                 ),
                 webhook_health_check_interval_seconds: 2,
                 content_type: "application/json".to_string(),
-            }
-        )
-    }
-
-    #[test]
-    fn config_overwritten_by_arg() {
-        set_env_vars();
-
-        let config = Config::new(Arg {
-            aws_access_key_id: Some("ARGAWSACCESSKEYID".to_string()),
-            aws_secret_access_key: Some("ARGAWSSECRETACCESSKEY".to_string()),
-            aws_session_token: Some("ARGAWSSESSIONTOKEN".to_string()),
-            aws_region: Some("us-west-2".to_string()),
-            aws_endpoint: Some("http://aws-endpoint.arg:2222/".to_string()),
-            sqs_url: Some(
-                Url::from_str("https://sqs.us-west-2.amazonaws.com/999999999999/arg-sqs-url")
-                    .unwrap(),
-            ),
-            webhook_url: Some(Url::from_str("http://webhook-url.arg:5000/").unwrap()),
-            output_sqs_url: Some(
-                Url::from_str(
-                    "https://sqs.us-west-2.amazonaws.com/999999999999/arg-output-sqs-url",
-                )
-                .unwrap(),
-            ),
-            worker_concurrency: Some(3),
-            connection_timeout: Some(3),
-            max_number_of_messages: Some(3),
-            sleep_seconds: Some(3),
-            webhook_health_check_url: Some(
-                Url::from_str("http://webhook-health-check-url.arg:5000/").unwrap(),
-            ),
-            webhook_health_check_interval_seconds: Some(3),
-            content_type: Some("text/plain".to_string()),
-        })
-        .unwrap();
-
-        assert_eq!(
-            config,
-            Config {
-                aws_access_key_id: Some("ARGAWSACCESSKEYID".to_string()),
-                aws_secret_access_key: Some("ARGAWSSECRETACCESSKEY".to_string()),
-                aws_session_token: Some("ARGAWSSESSIONTOKEN".to_string()),
-                aws_region: Some("us-west-2".to_string()),
-                aws_endpoint: Some("http://aws-endpoint.arg:2222/".to_string()),
-                sqs_url: Url::from_str(
-                    "https://sqs.us-west-2.amazonaws.com/999999999999/arg-sqs-url"
-                )
-                .unwrap(),
-                webhook_url: Url::from_str("http://webhook-url.arg:5000/").unwrap(),
-                output_sqs_url: Some(
-                    Url::from_str(
-                        "https://sqs.us-west-2.amazonaws.com/999999999999/arg-output-sqs-url"
-                    )
-                    .unwrap()
-                ),
-                worker_concurrency: 3,
-                connection_timeout: 3,
-                max_number_of_messages: 3,
-                sleep_seconds: 3,
-                webhook_health_check_url: Some(
-                    Url::from_str("http://webhook-health-check-url.arg:5000/").unwrap()
-                ),
-                webhook_health_check_interval_seconds: 3,
-                content_type: "text/plain".to_string(),
             }
         )
     }

@@ -3,7 +3,6 @@ mod domain;
 mod infra;
 
 use anyhow::Result;
-use structopt::StructOpt;
 use tokio::{
     signal::unix::{signal, SignalKind},
     sync::{broadcast, mpsc},
@@ -11,7 +10,7 @@ use tokio::{
 use tracing::info;
 
 use app::daemon::Daemon;
-use domain::{arg::Arg, config::Config};
+use domain::config::Config;
 use infra::{logger::setup_logger, sqs::AwsSqs, webhook::WebhookImpl};
 
 #[tokio::main]
@@ -19,8 +18,7 @@ async fn main() -> Result<()> {
     setup_logger()?;
 
     // get configuration parameters
-    let arg = Arg::from_args();
-    let config = Config::new(arg)?;
+    let config = Config::new();
 
     // run daemon
     let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
