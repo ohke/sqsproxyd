@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
     setup_logger()?;
 
     // get configuration parameters
-    let config = Config::new();
+    let config = Config::new().unwrap();
 
     // run daemon
     let (shutdown_tx, shutdown_rx) = broadcast::channel(1);

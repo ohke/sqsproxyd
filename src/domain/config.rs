@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use structopt::StructOpt;
 use url::Url;
 
@@ -45,8 +46,16 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Self {
-        Self::from_args()
+    pub fn new() -> Result<Self> {
+        let config = Self::from_args();
+
+        if !(1 <= config.max_number_of_messages && config.max_number_of_messages <= 10) {
+            return Err(anyhow!(
+                "`max_number_of_messages` should be >= 1 and <= 10."
+            ));
+        }
+
+        Ok(config)
     }
 }
 
@@ -84,7 +93,7 @@ mod test {
     fn config_default_is_env() {
         set_env_vars();
 
-        let config = Config::new();
+        let config = Config::new().unwrap();
 
         assert_eq!(
             config,
