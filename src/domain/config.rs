@@ -99,6 +99,7 @@ mod test {
         set_env_vars();
 
         let config = Config::new();
+        config.validate().unwrap();
 
         assert_eq!(
             config,
