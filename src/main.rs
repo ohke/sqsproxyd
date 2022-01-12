@@ -2,13 +2,14 @@ mod app;
 mod domain;
 mod infra;
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use tokio::{
     signal::unix::{signal, SignalKind},
     sync::{broadcast, mpsc},
 };
 use tracing::info;
 
+use crate::infra::logger::panic;
 use app::daemon::Daemon;
 use domain::config::Config;
 use infra::{logger::setup_logger, sqs::AwsSqs, webhook::WebhookImpl};
@@ -20,7 +21,9 @@ async fn main() -> Result<()> {
 
     setup_logger(&config.rust_log)?;
 
-    config.validate().unwrap();
+    if let Err(e) = config.validate() {
+        panic("Failed to parse configuration.", e);
+    }
 
     // run daemon
     let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
@@ -32,10 +35,14 @@ async fn main() -> Result<()> {
     tokio::spawn(async move { daemon.run(shutdown_rx, heartbeat_tx).await });
 
     // graceful shutdown
-    receive_shutdown_signal().await.unwrap();
+    if let Err(e) = receive_shutdown_signal().await {
+        panic("Failed to receive shutdown signal.", e);
+    }
     info!("Start to shutdown.");
 
-    shutdown_tx.send(()).unwrap();
+    if let Err(e) = shutdown_tx.send(()) {
+        panic("Failed to send shutdown message.", Error::new(e));
+    };
     let _ = heartbeat_rx.recv().await;
     info!("Terminated.");
 
