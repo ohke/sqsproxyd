@@ -43,19 +43,23 @@ pub struct Config {
         default_value = "application/json"
     )]
     pub content_type: String,
+    #[structopt(long, env = "SQSDPROXY_RUST_LOG", default_value = "WARN")]
+    pub rust_log: String,
 }
 
 impl Config {
-    pub fn new() -> Result<Self> {
-        let config = Self::from_args();
+    pub fn new() -> Self {
+        Self::from_args()
+    }
 
-        if !(1 <= config.max_number_of_messages && config.max_number_of_messages <= 10) {
+    pub fn validate(&self) -> Result<()> {
+        if !(1 <= self.max_number_of_messages && self.max_number_of_messages <= 10) {
             return Err(anyhow!(
                 "`max_number_of_messages` should be >= 1 and <= 10."
             ));
         }
 
-        Ok(config)
+        Ok(())
     }
 }
 
@@ -87,13 +91,14 @@ mod test {
         );
         env::set_var("SQSPROXYD_WEBHOOK_HEALTH_CHECK_INTERVAL_SECONDS", "2");
         env::set_var("SQSPROXYD_CONTENT_TYPE", "application/json");
+        env::set_var("SQSDPROXY_RUST_LOG", "INFO")
     }
 
     #[test]
     fn config_default_is_env() {
         set_env_vars();
 
-        let config = Config::new().unwrap();
+        let config = Config::new();
 
         assert_eq!(
             config,
@@ -123,6 +128,7 @@ mod test {
                 ),
                 webhook_health_check_interval_seconds: 2,
                 content_type: "application/json".to_string(),
+                rust_log: "INFO".to_string(),
             }
         )
     }

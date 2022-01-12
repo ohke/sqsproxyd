@@ -32,8 +32,7 @@ impl Daemon {
         mut shutdown_rx: broadcast::Receiver<()>,
         _heartbeat_tx: mpsc::Sender<()>,
     ) -> Result<()> {
-        info!("{:?}", self.config);
-
+        // wait for health check
         if let Some(_url) = &self.config.webhook_health_check_url {
             tokio::select! {
                 result = Self::health_check(self.webhook.borrow(), self.config.webhook_health_check_interval_seconds) => result.unwrap(),

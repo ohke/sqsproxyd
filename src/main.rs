@@ -15,10 +15,12 @@ use infra::{logger::setup_logger, sqs::AwsSqs, webhook::WebhookImpl};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    setup_logger()?;
-
     // get configuration parameters
-    let config = Config::new().unwrap();
+    let config = Config::new();
+
+    setup_logger(&config.rust_log)?;
+
+    config.validate().unwrap();
 
     // run daemon
     let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
