@@ -9,10 +9,10 @@ use tokio::{
 };
 use tracing::info;
 
-use crate::infra::logger::panic;
+use crate::infra::logging::panic;
 use app::daemon::Daemon;
 use domain::config::Config;
-use infra::{logger::setup_logger, sqs::AwsSqs, webhook::WebhookImpl};
+use infra::{logging::setup_logger, sqs::AwsSqs, webhook::WebhookImpl};
 
 #[tokio::main]
 async fn main() -> Result<()> {
