@@ -19,6 +19,9 @@ jobs:
         with:
           command: install
           args: cargo-udeps --locked
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
       - uses: actions-rs/cargo@v1
         with:
           command: udeps
