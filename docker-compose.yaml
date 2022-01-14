@@ -1,5 +1,16 @@
 version: '3.8'
 services:
+  sqsproxyd:
+    image: sqsproxyd
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: sqsproxyd
+    env_file:
+      - env/container.env
+    depends_on:
+      - sqsproxyd-api
+      - sqsproxyd-sqs
   builder:
     image: sqsproxyd:builder
     build:
@@ -23,8 +34,16 @@ services:
     command: bash
     tty: true
     depends_on:
-      - api
-  api:
+      - sqsproxyd-api
+      - sqsproxyd-sqs
+  sqsproxyd-api:
     image: ealen/echo-server:latest
     ports:
-      - 4000:80
+      - "4000:80"
+  sqsproxyd-sqs:
+    image: roribio16/alpine-sqs:latest
+    ports:
+      - "9324:9324"
+      - "9325:9325"
+    volumes:
+      - ./docker/sqs:/opt/custom

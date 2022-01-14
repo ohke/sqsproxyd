@@ -43,7 +43,7 @@ pub struct Config {
         default_value = "application/json"
     )]
     pub content_type: String,
-    #[structopt(long, env = "SQSDPROXY_RUST_LOG", default_value = "WARN")]
+    #[structopt(long, env = "SQSPROXYD_RUST_LOG", default_value = "WARN")]
     pub rust_log: String,
 }
 
@@ -91,7 +91,7 @@ mod test {
         );
         env::set_var("SQSPROXYD_WEBHOOK_HEALTH_CHECK_INTERVAL_SECONDS", "2");
         env::set_var("SQSPROXYD_CONTENT_TYPE", "application/json");
-        env::set_var("SQSDPROXY_RUST_LOG", "INFO")
+        env::set_var("SQSPROXYD_RUST_LOG", "INFO")
     }
 
     #[test]

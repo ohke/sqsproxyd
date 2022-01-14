@@ -68,7 +68,7 @@ impl Daemon {
         loop {
             tokio::select! {
                 result = self.poll() => {
-                    let messages = result.unwrap();
+                    let messages = result?;
                     if let Some(messages) = messages {
                         if messages.is_empty() {
                             Self::sleep(self.config.sleep_seconds).await;
