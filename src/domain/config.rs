@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use http::Uri;
 use structopt::StructOpt;
 use url::Url;
 
@@ -14,7 +15,7 @@ pub struct Config {
     #[structopt(long, env = "SQSPROXYD_AWS_REGION")]
     pub aws_region: Option<String>,
     #[structopt(long, env = "SQSPROXYD_AWS_ENDPOINT")]
-    pub aws_endpoint: Option<String>,
+    pub aws_endpoint: Option<Uri>,
     #[structopt(long, env = "SQSPROXYD_SQS_URL")]
     pub sqs_url: Url,
     #[structopt(long, env = "SQSPROXYD_WEBHOOK_URL")]
@@ -117,7 +118,7 @@ mod test {
                 aws_secret_access_key: Some("AWSSECRETACCESSKEY".to_string()),
                 aws_session_token: Some("AWSSESSIONTOKEN".to_string()),
                 aws_region: Some("us-west-1".to_string()),
-                aws_endpoint: Some("http://aws-endpoint.env:2222/".to_string()),
+                aws_endpoint: Some(Uri::from_str("http://aws-endpoint.env:2222/").unwrap()),
                 sqs_url: Url::from_str(
                     "https://sqs.us-west-1.amazonaws.com/999999999999/env-sqs-url"
                 )

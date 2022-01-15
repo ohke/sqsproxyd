@@ -1,8 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use aws_sdk_sqs::{Client, Endpoint};
-use http::Uri;
-use std::str::FromStr;
 
 use crate::domain::message::Message;
 
@@ -32,7 +30,7 @@ impl AwsSqs {
             Some(aws_endpoint) => {
                 let aws_config = load_aws_config(config).await;
                 let sqs_config = aws_sdk_sqs::config::Builder::from(&aws_config)
-                    .endpoint_resolver(Endpoint::immutable(Uri::from_str(aws_endpoint).unwrap()))
+                    .endpoint_resolver(Endpoint::immutable(aws_endpoint.clone()))
                     .build();
                 aws_sdk_sqs::Client::from_conf(sqs_config)
             }
