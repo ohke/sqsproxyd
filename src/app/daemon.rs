@@ -9,6 +9,7 @@ use tracing::{info, warn};
 
 use crate::domain::config::Config;
 use crate::domain::message::Message;
+use crate::infra::logging::panic;
 use crate::infra::sqs::Sqs;
 use crate::infra::webhook::Webhook;
 
@@ -35,7 +36,12 @@ impl Daemon {
         // wait for health check
         if let Some(_url) = &self.config.webhook_health_check_url {
             tokio::select! {
-                result = Self::health_check(self.webhook.borrow(), self.config.webhook_health_check_interval_seconds) => result.unwrap(),
+                result = Self::health_check(self.webhook.borrow(), self.config.webhook_health_check_interval_seconds) => {
+                    match result {
+                        Ok(v) => v,
+                        Err(e) => panic("Failed to pass health check of the webhook.", e),
+                    }
+                },
                 _ = shutdown_rx.recv() => return Ok(()),
             }
         }
