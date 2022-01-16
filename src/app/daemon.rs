@@ -5,7 +5,7 @@ use tokio::{
     sync::{broadcast, mpsc},
     time::{sleep, Duration},
 };
-use tracing::{info, warn};
+use tracing::{debug, error, info, warn};
 
 use crate::domain::config::Config;
 use crate::domain::message::Message;
@@ -80,7 +80,11 @@ impl Daemon {
                             Self::sleep(self.config.sleep_seconds).await;
                         } else {
                             for message in messages {
-                                tx.send(message).await?;
+                                let r = tx.send(message).await;
+                                if r.is_err() {
+                                    error!("Failed to send received message to worker.");
+                                }
+                                r?
                             }
                         }
                     } else {
@@ -88,8 +92,12 @@ impl Daemon {
                     }
                 }
                 _ = shutdown_rx.recv() => {
-                    worker_shutdown_tx.send(()).unwrap();
-                    let _ = worker_heartbeat_rx.recv().await;
+                    let r = worker_shutdown_tx.send(());
+                    if r.is_ok() {
+                        let _ = worker_heartbeat_rx.recv().await;
+                    } else {
+                        error!("Failed to send shutdown message to worker.");
+                    }
                     return Ok(());
                 }
             }
@@ -123,13 +131,22 @@ impl Daemon {
         loop {
             tokio::select! {
                 result = rx.recv() => {
-                    let message = result.unwrap();
-                    info!("{:?}", message);
+                    match result {
+                        Ok(message) => {
+                            debug!("received message: {:?}", message);
 
-                    if message.check_hash() {
-                        let _ = Self::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs).await;
-                    } else {
-                        warn!("Mismatch message MD5 digest.");
+                            if message.check_hash() {
+                                match Self::process_message(message, sqs.borrow(), webhook.borrow(), &output_sqs).await {
+                                    Ok(()) => debug!("Succeeded to process message."),
+                                    Err(e) => error!("Failed to process message. ({:?})", e),
+                                };
+                            } else {
+                                warn!("Mismatch message MD5 digest.");
+                            }
+                        }
+                        Err(e) => {
+                            error!("Failed to receive message. ({:?})", e);
+                        }
                     }
                 }
                 _ = shutdown_rx.recv() => return Ok(()),
@@ -143,11 +160,11 @@ impl Daemon {
         webhook: &'_ (dyn Webhook + Send + Sync),
         output_sqs: &Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Result<()> {
-        let (is_successed, res) = webhook
+        let (is_succeeded, res) = webhook
             .post(message.body.clone(), &message.message_id)
             .await?;
-        if !is_successed {
-            info!("Not succeeded: {:?}", &res);
+        if !is_succeeded {
+            error!("Not succeeded: {:?}", &res);
             return Ok(());
         }
 
