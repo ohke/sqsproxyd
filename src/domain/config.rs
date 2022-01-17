@@ -30,14 +30,14 @@ pub struct Config {
     pub max_number_of_messages: i32,
     #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
     pub sleep_seconds: u64,
-    #[structopt(long, env = "SQSPROXYD_WEBHOOK_HEALTH_CHECK_URL")]
-    pub webhook_health_check_url: Option<Url>,
+    #[structopt(long, env = "SQSPROXYD_WEBHOOK_HEALTHCHECK_URL")]
+    pub webhook_healthcheck_url: Option<Url>,
     #[structopt(
         long,
-        env = "SQSPROXYD_WEBHOOK_HEALTH_CHECK_INTERVAL_SECONDS",
+        env = "SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS",
         default_value = "1"
     )]
-    pub webhook_health_check_interval_seconds: u64,
+    pub webhook_healthcheck_interval_seconds: u64,
     #[structopt(
         long,
         env = "SQSPROXYD_CONTENT_TYPE",
@@ -96,10 +96,10 @@ mod test {
         env::set_var("SQSPROXYD_MAX_NUMBER_OF_MESSAGES", "2");
         env::set_var("SQSPROXYD_SLEEP_SECONDS", "2");
         env::set_var(
-            "SQSPROXYD_WEBHOOK_HEALTH_CHECK_URL",
+            "SQSPROXYD_WEBHOOK_HEALTHCHECK_URL",
             "http://webhook-health-check-url.env:5000/",
         );
-        env::set_var("SQSPROXYD_WEBHOOK_HEALTH_CHECK_INTERVAL_SECONDS", "2");
+        env::set_var("SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS", "2");
         env::set_var("SQSPROXYD_CONTENT_TYPE", "application/json");
         env::set_var("SQSPROXYD_RUST_LOG", "INFO")
     }
@@ -134,10 +134,10 @@ mod test {
                 connection_timeout: 2,
                 max_number_of_messages: 2,
                 sleep_seconds: 2,
-                webhook_health_check_url: Some(
+                webhook_healthcheck_url: Some(
                     Url::from_str("http://webhook-health-check-url.env:5000/").unwrap()
                 ),
-                webhook_health_check_interval_seconds: 2,
+                webhook_healthcheck_interval_seconds: 2,
                 content_type: "application/json".to_string(),
                 rust_log: "INFO".to_string(),
             }

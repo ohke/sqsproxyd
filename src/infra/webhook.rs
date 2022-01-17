@@ -26,7 +26,7 @@ impl WebhookImpl {
 impl Webhook for WebhookImpl {
     async fn get(&self) -> Result<()> {
         let client = reqwest::Client::new();
-        let url = self.config.webhook_health_check_url.clone().unwrap();
+        let url = self.config.webhook_healthcheck_url.clone().unwrap();
         let _ = client
             .get(url)
             .header(
