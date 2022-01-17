@@ -20,7 +20,7 @@ pub trait Sqs {
 pub struct AwsSqs {
     client: Client,
     url: String,
-    max_number_of_messages: usize,
+    max_number_of_messages: i32,
 }
 
 impl AwsSqs {
@@ -50,7 +50,7 @@ impl Sqs for AwsSqs {
             .client
             .receive_message()
             .queue_url(&self.url)
-            .max_number_of_messages(TryFrom::try_from(self.max_number_of_messages).unwrap())
+            .max_number_of_messages(self.max_number_of_messages)
             .send()
             .await?
             .messages

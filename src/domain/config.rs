@@ -27,7 +27,7 @@ pub struct Config {
     #[structopt(long, env = "SQSPROXYD_CONNECTION_TIMEOUT", default_value = "30")]
     pub connection_timeout: u64,
     #[structopt(long, env = "SQSPROXYD_MAX_NUMBER_OF_MESSAGES", default_value = "1")]
-    pub max_number_of_messages: usize,
+    pub max_number_of_messages: i32,
     #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
     pub sleep_seconds: u64,
     #[structopt(long, env = "SQSPROXYD_WEBHOOK_HEALTH_CHECK_URL")]
@@ -142,5 +142,18 @@ mod test {
                 rust_log: "INFO".to_string(),
             }
         )
+    }
+
+    #[test]
+    fn config_validate_max_number_of_messages() {
+        set_env_vars();
+
+        let mut config = Config::new();
+        config.max_number_of_messages = 0;
+        assert!(config.validate().is_err());
+
+        let mut config = Config::new();
+        config.max_number_of_messages = 11;
+        assert!(config.validate().is_err());
     }
 }
