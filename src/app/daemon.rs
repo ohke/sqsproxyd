@@ -6,6 +6,7 @@ use tokio::{
     time::{sleep, Duration},
 };
 use tracing::{debug, error, info, warn};
+use url::Url;
 
 use crate::domain::config::Config;
 use crate::domain::message::Message;
@@ -34,9 +35,9 @@ impl Daemon {
         _heartbeat_tx: mpsc::Sender<()>,
     ) -> Result<()> {
         // wait for health check
-        if let Some(_url) = &self.config.webhook_healthcheck_url {
+        if let Some(url) = &self.config.webhook_healthcheck_url {
             tokio::select! {
-                result = Self::health_check(self.webhook.borrow(), self.config.webhook_healthcheck_interval_seconds) => {
+                result = Self::healthcheck(self.webhook.borrow(), url, self.config.webhook_healthcheck_interval_seconds) => {
                     match result {
                         Ok(v) => v,
                         Err(e) => panic("Failed to pass health check of the webhook.", e),
@@ -104,9 +105,13 @@ impl Daemon {
         }
     }
 
-    async fn health_check(webhook: &'_ (dyn Webhook + Send + Sync), seconds: u64) -> Result<()> {
+    async fn healthcheck(
+        webhook: &'_ (dyn Webhook + Send + Sync),
+        url: &Url,
+        seconds: u64,
+    ) -> Result<()> {
         loop {
-            if webhook.get().await.is_ok() {
+            if webhook.get(url).await.is_ok() {
                 break;
             }
 
@@ -192,6 +197,7 @@ mod tests {
     use anyhow::anyhow;
     use mockall::predicate::*;
     use std::borrow::Borrow;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn test_process_message_with_output() {
@@ -304,11 +310,17 @@ mod tests {
         webhook
             .expect_get()
             .times(3)
-            .returning(|| Err(anyhow!("Error")))
+            .returning(|_| Err(anyhow!("Error")))
             .times(1)
-            .returning(|| Ok(()));
+            .returning(|_| Ok(()));
         let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
 
-        Daemon::health_check(webhook.borrow(), 1).await.unwrap();
+        Daemon::healthcheck(
+            webhook.borrow(),
+            &Url::from_str("http://dummy:1234/").unwrap(),
+            1,
+        )
+        .await
+        .unwrap();
     }
 }

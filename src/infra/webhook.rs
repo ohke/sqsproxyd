@@ -4,11 +4,12 @@ use async_trait::async_trait;
 #[cfg(test)]
 use mockall::automock;
 use std::time::Duration;
+use url::Url;
 
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Webhook {
-    async fn get(&self) -> Result<()>;
+    async fn get(&self, url: &Url) -> Result<()>;
     async fn post(&self, data: String, message_id: &str) -> Result<(bool, String)>;
 }
 
@@ -24,11 +25,10 @@ impl WebhookImpl {
 
 #[async_trait]
 impl Webhook for WebhookImpl {
-    async fn get(&self) -> Result<()> {
+    async fn get(&self, url: &Url) -> Result<()> {
         let client = reqwest::Client::new();
-        let url = self.config.webhook_healthcheck_url.clone().unwrap();
         let _ = client
-            .get(url)
+            .get(url.clone())
             .header(
                 reqwest::header::USER_AGENT,
                 format!("sqsdproxy/{}", env!("CARGO_PKG_VERSION")),
