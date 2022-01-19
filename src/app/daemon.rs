@@ -75,21 +75,29 @@ impl Daemon {
         loop {
             tokio::select! {
                 result = self.poll() => {
-                    let messages = result?;
-                    if let Some(messages) = messages {
-                        if messages.is_empty() {
-                            Self::sleep(self.config.sleep_seconds).await;
-                        } else {
-                            for message in messages {
-                                let r = tx.send(message).await;
-                                if r.is_err() {
-                                    error!("Failed to send received message to worker.");
+                    match result {
+                        Ok(response) => {
+                            match response {
+                                Some(messages) => {
+                                    if messages.is_empty() {
+                                        Self::sleep(self.config.sleep_seconds).await;
+                                    } else {
+                                        for message in messages {
+                                            let r = tx.send(message).await;
+                                            if r.is_err() {
+                                                error!("Failed to send received message to worker.");
+                                            }
+                                            r?
+                                        }
+                                    }
                                 }
-                                r?
+                                None => Self::sleep(self.config.sleep_seconds).await,
                             }
+                        },
+                        Err(e) => {
+                            error!("Failed to receive messages from SQS. ({:?})", e);
+                            Self::sleep(self.config.sleep_seconds).await;
                         }
-                    } else {
-                        Self::sleep(self.config.sleep_seconds).await;
                     }
                 }
                 _ = shutdown_rx.recv() => {
