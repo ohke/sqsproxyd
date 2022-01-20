@@ -64,7 +64,7 @@ impl Sqs for AwsSqs {
         self.client
             .send_message()
             .queue_url(&self.url)
-            .message_body(serde_json::to_string(&body)?)
+            .message_body(body)
             .send()
             .await?;
         Ok(())
