@@ -313,7 +313,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_health_check() {
+    async fn test_healthcheck() {
         let mut webhook = MockWebhook::new();
         webhook
             .expect_get()
