@@ -26,4 +26,4 @@ RUN cargo build --release
 FROM gcr.io/distroless/cc AS sqsproxyd
 
 COPY --from=release-builder /usr/src/sqsproxyd/target/release/sqsproxyd /bin/sqsproxyd
-CMD ["/bin/sqsproxyd"]
+ENTRYPOINT ["sqsproxyd"]
