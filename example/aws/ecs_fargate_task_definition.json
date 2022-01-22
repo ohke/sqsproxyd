@@ -1,0 +1,111 @@
+{
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "environmentFiles": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sqsproxyd-task-definition",
+          "awslogs-region": "us-west-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "portMappings": [],
+      "cpu": 64,
+      "environment": [
+        {
+          "name": "SQSPROXYD_OUTPUT_SQS_URL",
+          "value": "https://sqs.us-west-1.amazonaws.com/123456789012/example-output-sqs"
+        },
+        {
+          "name": "SQSPROXYD_SQS_URL",
+          "value": "https://sqs.us-west-1.amazonaws.com/123456789012/example-sqs"
+        },
+        {
+          "name": "SQSPROXYD_WEBHOOK_URL",
+          "value": "http://127.0.0.1:4000/api"
+        }
+      ],
+      "memory": 128,
+      "memoryReservation": 128,
+      "image": "ohke/sqsproxyd:latest",
+      "dependsOn": [
+        {
+          "containerName": "example-api",
+          "condition": "HEALTHY"
+        }
+      ],
+      "essential": true,
+      "links": [],
+      "dockerLabels": {
+        "Name": "sqsproxyd"
+      },
+      "name": "sqsproxyd"
+    },
+    {
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sqsproxyd-task-definition",
+          "awslogs-region": "us-west-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "entryPoint": [
+        "node",
+        "webserver"
+      ],
+      "portMappings": [
+        {
+          "hostPort": 4000,
+          "protocol": "tcp",
+          "containerPort": 4000
+        }
+      ],
+      "cpu": 0,
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "4000"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "image": "ealen/echo-server:latest",
+      "healthCheck": {
+        "retries": 3,
+        "command": [
+          "CMD-SHELL",
+          "echo hello"
+        ],
+        "timeout": 10,
+        "interval": 10
+      },
+      "essential": true,
+      "dockerLabels": {
+        "Name": "example-api"
+      },
+      "name": "example-api"
+    }
+  ],
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "family": "sqsproxyd-task-definition",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "networkMode": "awsvpc",
+  "runtimePlatform": {
+    "operatingSystemFamily": "LINUX"
+  },
+  "cpu": "256",
+  "inferenceAccelerators": [],
+  "volumes": [],
+  "tags": [
+    {
+      "key": "Name",
+      "value": "sqsproxyd-task-definition"
+    }
+  ]
+}
