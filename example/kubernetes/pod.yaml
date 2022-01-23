@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sqsproxyd-pod
+spec:
+  containers:
+    - name: sqsproxyd
+      image: ohke/sqsproxyd:latest
+      env:
+        - name: AWS_DEFAULT_REGION
+          value: "us-west-i"
+        - name: AWS_ACCESS_KEY_ID
+          value: "YOURACCESSKEY"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "YOURSECRETKEY"
+        - name: SQSPROXYD_SQS_URL
+          value: "https://sqs.us-west-1.amazonaws.com/123456789012/example-sqs"
+        - name: SQSPROXYD_WEBHOOK_URL
+          value: "http://127.0.0.1:4000/api"
+        - name: SQSPROXYD_OUTPUT_SQS_URL
+          value: "https://sqs.us-west-1.amazonaws.com/123456789012/example-sqs"
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "64m"
+        limits:
+          memory: "128Mi"
+    - name: example-api
+      image: ealen/echo-server:latest
+      env:
+        - name: PORT
+          value: "4000"
+      ports:
+        - containerPort: 4000
+          protocol: TCP
