@@ -1,3 +1,7 @@
+[env]
+VERSION = { script = ["cargo metadata --no-deps | jq -r '.packages[0].version'"] }
+IMAGE_REPOSITORY = { source = "${DOCKER_REPOSITORY}", default_value = "ohke/sqsproxyd" }
+
 [tasks.format]
 install_crate = "rustfmt"
 command = "cargo"
@@ -18,3 +22,21 @@ dependencies = [
     "clippy",
     "test"
 ]
+
+[tasks.build-image]
+script = '''
+#!/bin/bash -eu
+
+docker build -f ./docker/Dockerfile --target sqsproxyd -t ${IMAGE_REPOSITORY}:${VERSION} .
+'''
+
+[tasks.push-repository]
+dependencies = [
+    "build-image"
+]
+script = '''
+#!/bin/bash -eu
+
+docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_TOKEN} https://index.docker.io/v1/
+docker push ${IMAGE_REPOSITORY}:${VERSION}
+'''
