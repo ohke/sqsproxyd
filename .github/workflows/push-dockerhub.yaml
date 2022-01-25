@@ -1,0 +1,27 @@
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+jobs:
+  push-dockerhub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --debug cargo-make
+      - uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: push-repository
+        env:
+          IMAGE_REPOSITORY: ${{ secrets.IMAGE_REPOSITORY }}
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
