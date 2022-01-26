@@ -4,15 +4,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
-      - uses: davidB/rust-cargo-make@v1
-      - run: cargo make check
       - uses: actions-rs/cargo@v1
         with:
           command: install
           args: cargo-udeps --locked
+      - uses: davidB/rust-cargo-make@v1
+      - uses: Swatinem/rust-cache@v1
+      - run: cargo make check
       - uses: actions-rs/cargo@v1
         with:
           command: udeps
