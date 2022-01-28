@@ -1,6 +1,7 @@
 [env]
 VERSION = { script = ["cargo metadata --no-deps | jq -r '.packages[0].version'"] }
 IMAGE_REPOSITORY = { source = "${DOCKER_REPOSITORY}", default_value = "ohke/sqsproxyd" }
+RELEASE_TARGET = { source = "${TARGET_OS}", mapping = {"linux" = "x86_64-unknown-linux-musl", "macos" = "x86_64-apple-darwin"} }
 
 [tasks.format]
 install_crate = "rustfmt"
@@ -40,3 +41,24 @@ script = '''
 docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_TOKEN} https://index.docker.io/v1/
 docker push ${IMAGE_REPOSITORY}:${VERSION}
 '''
+
+[tasks.build-release]
+command = "cargo"
+args = [
+    "build",
+    "--release",
+    "--target=${RELEASE_TARGET}"
+]
+
+[tasks.compress-binary]
+script = '''
+#!/bin/bash -eu
+
+zip sqsproxyd-${VERSION}-${RELEASE_TARGET}.zip ./target/${RELEASE_TARGET}/release/sqsproxyd
+'''
+
+[tasks.release]
+dependencies = [
+    "build-release",
+    "compress-binary"
+]
