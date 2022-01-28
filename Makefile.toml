@@ -50,15 +50,12 @@ args = [
     "--target=${RELEASE_TARGET}"
 ]
 
-[tasks.compress-binary]
+[tasks.compress-release-binary]
+dependencies = [
+    "build-release"
+]
 script = '''
 #!/bin/bash -eu
 
 zip sqsproxyd-${VERSION}-${RELEASE_TARGET}.zip ./target/${RELEASE_TARGET}/release/sqsproxyd
 '''
-
-[tasks.release]
-dependencies = [
-    "build-release",
-    "compress-binary"
-]

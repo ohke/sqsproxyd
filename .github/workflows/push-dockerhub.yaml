@@ -6,15 +6,11 @@ jobs:
   push-dockerhub:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: --debug cargo-make
+      - uses: davidB/rust-cargo-make@v1
       - uses: actions-rs/cargo@v1
         with:
           command: make
@@ -23,3 +19,22 @@ jobs:
           IMAGE_REPOSITORY: ${{ secrets.IMAGE_REPOSITORY }}
           DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  release-binary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: davidB/rust-cargo-make@v1
+      - uses: Swatinem/rust-cache@v1
+      - uses: action-rs/cargo@v1
+        with:
+          command: make
+          args: compress-release-binary
+        env:
+          RELEASE_TARGET: linux
+      - run: echo "VERSION=`cargo metadata --no-deps | jq -r '.packages[0].version'`" >> $GITHUB_ENV
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: sqsproxyd-${VERSION}-x86_64-unknown-linux-musl.zip
