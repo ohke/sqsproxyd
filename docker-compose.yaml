@@ -6,8 +6,6 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: sqsproxyd
-    env_file:
-      - env/container.env
     depends_on:
       - sqsproxyd-api
       - sqsproxyd-sqs
@@ -31,8 +29,6 @@ services:
       target: dev
     volumes:
       - .:/usr/src/sqsproxyd
-    command: bash
-    tty: true
     depends_on:
       - sqsproxyd-api
       - sqsproxyd-sqs
@@ -44,6 +40,5 @@ services:
     image: roribio16/alpine-sqs:latest
     ports:
       - "9324:9324"
-      - "9325:9325"
     volumes:
       - ./docker/sqs:/opt/custom
