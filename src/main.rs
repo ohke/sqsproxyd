@@ -12,7 +12,7 @@ use tracing::info;
 use crate::infra::logging::panic;
 use app::daemon::Daemon;
 use domain::config::Config;
-use infra::{api::WebhookImpl, logging::setup_logger, sqs::AwsSqs};
+use infra::{api::ApiImpl, logging::setup_logger, sqs::AwsSqs};
 
 #[tokio::main]
 async fn main() -> Result<()> {

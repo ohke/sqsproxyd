@@ -13,18 +13,18 @@ pub trait Api {
     async fn post(&self, data: String, message_id: &str) -> Result<(bool, String)>;
 }
 
-pub struct WebhookImpl {
+pub struct ApiImpl {
     pub config: Config,
 }
 
-impl WebhookImpl {
+impl ApiImpl {
     pub fn new(config: Config) -> Self {
-        WebhookImpl { config }
+        ApiImpl { config }
     }
 }
 
 #[async_trait]
-impl Api for WebhookImpl {
+impl Api for ApiImpl {
     async fn get(&self, url: &Url) -> Result<()> {
         let client = reqwest::Client::new();
         let _ = client

@@ -1,4 +1,4 @@
-use crate::{AwsSqs, WebhookImpl};
+use crate::{ApiImpl, AwsSqs};
 use anyhow::Result;
 use std::borrow::Borrow;
 use tokio::{
@@ -25,7 +25,7 @@ impl Daemon {
         Daemon {
             config: config.clone(),
             sqs: Box::new(AwsSqs::new(config.sqs_url.to_string(), &config).await),
-            webhook: Box::new(WebhookImpl::new(config.clone())),
+            webhook: Box::new(ApiImpl::new(config.clone())),
         }
     }
 
@@ -55,7 +55,7 @@ impl Daemon {
         for _ in 0..self.config.worker_concurrency {
             let config = self.config.clone();
             let sqs = Box::new(AwsSqs::new(config.sqs_url.to_string(), &config).await);
-            let webhook = Box::new(WebhookImpl::new(self.config.clone()));
+            let webhook = Box::new(ApiImpl::new(self.config.clone()));
             let output_sqs: Option<Box<dyn Sqs + Send + Sync>> = match &self.config.output_sqs_url {
                 None => None,
                 Some(u) => Some(Box::new(AwsSqs::new(u.to_string(), &config).await)),
