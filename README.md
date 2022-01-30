@@ -94,7 +94,7 @@ $ cargo make
 ```bash
 $ cp ./env/local.env ./.env
 $ direnv allow
-$ docker-compose up sqs api
+$ docker-compose up -d sqsproxyd-sqs sqsproxyd-api
 $ cargo run
 ```
 
