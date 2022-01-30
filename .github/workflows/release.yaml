@@ -1,9 +1,22 @@
 on:
-  push:
-    tags:
-      - '*.*.*'
+  release:
+    types: [created]
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: The tag name and the package version should match.
+        run: |
+          CARGO_PACKAGE_VERSION=`cargo metadata --no-deps | jq -r '.packages[0].version'`
+          test ${TAG_NAME} = ${CARGO_PACKAGE_VERSION}
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
   push-dockerhub:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -11,15 +24,13 @@ jobs:
         with:
           toolchain: stable
       - uses: davidB/rust-cargo-make@v1
-      - uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: push-repository
+      - run: cargo make push-repository
         env:
           IMAGE_REPOSITORY: ${{ secrets.IMAGE_REPOSITORY }}
           DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   release-binary:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,13 +39,11 @@ jobs:
           toolchain: stable
       - uses: davidB/rust-cargo-make@v1
       - uses: Swatinem/rust-cache@v1
-      - uses: action-rs/cargo@v1
-        with:
-          command: make
-          args: compress-release-binary
+      - run: cargo make compress-release-binary
         env:
           RELEASE_TARGET: linux
-      - run: echo "VERSION=`cargo metadata --no-deps | jq -r '.packages[0].version'`" >> $GITHUB_ENV
       - uses: softprops/action-gh-release@v1
         with:
-          files: sqsproxyd-${VERSION}-x86_64-unknown-linux-musl.zip
+          files: sqsproxyd-${TAG_NAME}-x86_64-unknown-linux-musl.zip
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
