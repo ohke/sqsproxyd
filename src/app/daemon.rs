@@ -35,9 +35,9 @@ impl Daemon {
         _heartbeat_tx: mpsc::Sender<()>,
     ) -> Result<()> {
         // wait for health check
-        if let Some(url) = &self.config.webhook_healthcheck_url {
+        if let Some(url) = &self.config.api_healthcheck_url {
             tokio::select! {
-                result = Self::healthcheck(self.webhook.borrow(), url, self.config.webhook_healthcheck_interval_seconds) => {
+                result = Self::healthcheck(self.webhook.borrow(), url, self.config.api_healthcheck_interval_seconds) => {
                     match result {
                         Ok(v) => v,
                         Err(e) => panic("Failed to pass health check of the webhook.", e),

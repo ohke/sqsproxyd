@@ -18,8 +18,8 @@ pub struct Config {
     pub aws_endpoint: Option<Uri>,
     #[structopt(long, env = "SQSPROXYD_SQS_URL")]
     pub sqs_url: Url,
-    #[structopt(long, env = "SQSPROXYD_WEBHOOK_URL")]
-    pub webhook_url: Url,
+    #[structopt(long, env = "SQSPROXYD_API_URL")]
+    pub api_url: Url,
     #[structopt(long, env = "SQSPROXYD_OUTPUT_SQS_URL")]
     pub output_sqs_url: Option<Url>,
     #[structopt(long, env = "SQSPROXYD_WORKER_CONCURRENCY", default_value = "1")]
@@ -30,14 +30,14 @@ pub struct Config {
     pub max_number_of_messages: i32,
     #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
     pub sleep_seconds: u64,
-    #[structopt(long, env = "SQSPROXYD_WEBHOOK_HEALTHCHECK_URL")]
-    pub webhook_healthcheck_url: Option<Url>,
+    #[structopt(long, env = "SQSPROXYD_API_HEALTHCHECK_URL")]
+    pub api_healthcheck_url: Option<Url>,
     #[structopt(
         long,
-        env = "SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS",
+        env = "SQSPROXYD_API_HEALTHCHECK_INTERVAL_SECONDS",
         default_value = "1"
     )]
-    pub webhook_healthcheck_interval_seconds: u64,
+    pub api_healthcheck_interval_seconds: u64,
     #[structopt(
         long,
         env = "SQSPROXYD_CONTENT_TYPE",
@@ -86,7 +86,7 @@ mod test {
             "SQSPROXYD_SQS_URL",
             "https://sqs.us-west-1.amazonaws.com/999999999999/env-sqs-url",
         );
-        env::set_var("SQSPROXYD_WEBHOOK_URL", "http://webhook-url.env:5000/");
+        env::set_var("SQSPROXYD_API_URL", "http://api-url.env:5000/");
         env::set_var(
             "SQSPROXYD_OUTPUT_SQS_URL",
             "https://sqs.us-west-1.amazonaws.com/999999999999/env-output-sqs-url",
@@ -96,10 +96,10 @@ mod test {
         env::set_var("SQSPROXYD_MAX_NUMBER_OF_MESSAGES", "2");
         env::set_var("SQSPROXYD_SLEEP_SECONDS", "2");
         env::set_var(
-            "SQSPROXYD_WEBHOOK_HEALTHCHECK_URL",
-            "http://webhook-health-check-url.env:5000/",
+            "SQSPROXYD_API_HEALTHCHECK_URL",
+            "http://api-health-check-url.env:5000/",
         );
-        env::set_var("SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS", "2");
+        env::set_var("SQSPROXYD_API_HEALTHCHECK_INTERVAL_SECONDS", "2");
         env::set_var("SQSPROXYD_CONTENT_TYPE", "application/json");
         env::set_var("SQSPROXYD_RUST_LOG", "INFO")
     }
@@ -123,7 +123,7 @@ mod test {
                     "https://sqs.us-west-1.amazonaws.com/999999999999/env-sqs-url"
                 )
                 .unwrap(),
-                webhook_url: Url::from_str("http://webhook-url.env:5000/").unwrap(),
+                api_url: Url::from_str("http://api-url.env:5000/").unwrap(),
                 output_sqs_url: Some(
                     Url::from_str(
                         "https://sqs.us-west-1.amazonaws.com/999999999999/env-output-sqs-url"
@@ -134,10 +134,10 @@ mod test {
                 connection_timeout: 2,
                 max_number_of_messages: 2,
                 sleep_seconds: 2,
-                webhook_healthcheck_url: Some(
-                    Url::from_str("http://webhook-health-check-url.env:5000/").unwrap()
+                api_healthcheck_url: Some(
+                    Url::from_str("http://api-health-check-url.env:5000/").unwrap()
                 ),
-                webhook_healthcheck_interval_seconds: 2,
+                api_healthcheck_interval_seconds: 2,
                 content_type: "application/json".to_string(),
                 rust_log: "INFO".to_string(),
             }

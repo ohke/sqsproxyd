@@ -23,7 +23,7 @@
           "value": "https://sqs.us-west-1.amazonaws.com/123456789012/example-sqs"
         },
         {
-          "name": "SQSPROXYD_WEBHOOK_URL",
+          "name": "SQSPROXYD_API_URL",
           "value": "http://127.0.0.1:4000/api"
         }
       ],

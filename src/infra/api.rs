@@ -42,7 +42,7 @@ impl Api for ApiImpl {
     async fn post(&self, data: String, message_id: &str) -> Result<(bool, String)> {
         let client = reqwest::Client::new();
         let res = client
-            .post(self.config.webhook_url.clone())
+            .post(self.config.api_url.clone())
             .header(
                 reqwest::header::USER_AGENT,
                 format!("sqsdproxy/{}", env!("CARGO_PKG_VERSION")),

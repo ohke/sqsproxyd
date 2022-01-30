@@ -7,9 +7,9 @@ In addition, it has the ability to send a response (= forward) to another SQS.
 ![Architecture](image/overview.jpeg)
 
 ## Features
-- Receive (dequeue) a message from SQS and make a POST request to the specified Webhook API.
-- If the Webhook API returns a success response (HTTP status: 2**), removes the message from the SQS.
-- [Option] If an output SQS is set, the Webhook API success response body be sent (enqueued) to that SQS as a message.
+- Receive (dequeue) a message from SQS and make a POST request to the specified API.
+- If the API returns a success response (HTTP status: 2**), removes the message from the SQS.
+- [Option] If an output SQS is set, the API success response body be sent (enqueued) to that SQS as a message.
 
 ### Why does sqsproxyd implement response forwarding?
 The purpose is to make it easy to build a microservice architecture system using SQS.
@@ -25,7 +25,7 @@ The binaries can be downloaded [here](https://github.com/ohke/sqsproxyd/releases
 ```bash
 $ sqsproxyd \
   --sqs-url https://sqs.us-west-1.amazonaws.com/123456789012/sqsproxyd-sqs \
-  --webhook-url http://localhost:4000/api 
+  --api-url http://localhost:4000/api 
 ```
 
 #### Docker container
@@ -35,7 +35,7 @@ The sqsproxyd container image can also be pulled from Docker Hub.
 $ docker pull ohke/sqsproxyd
 $ docker run ohke/sqsproxyd \
   --sqs-url https://sqs.us-west-1.amazonaws.com/123456789012/sqsproxyd-sqs \
-  --webhook-url http://localhost:4000/api
+  --api-url http://localhost:4000/api
 ```
 
 ##### How can I use sqsproxyd images with AWS ECS or Kubernetes?
@@ -59,15 +59,15 @@ Either method can be used to pass parameters. If a value exists for both, comman
 | --aws-region | SQSPROXYD_AWS_REGION or AWS_DEFAULT_REGION | no | - | Your AWS region name |
 | --aws-endpoint | SQSPROXYD_AWS_ENDPOINT | no | - | To use mock SQS (like [alpine-sqs](https://github.com/roribio/alpine-sqs)) |
 | --sqs-url | SQSPROXYD_SQS_URL | yes | - | SQS URL to input |
-| --webhook-url | SQSPROXYD_WEBHOOK_URL | yes | - | Webhook URL to POST request |
+| --api-url | SQSPROXYD_API_URL | yes | - | API URL to POST request |
 | --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | SQS URL to forward response message |
 | --worker-concurrency | SQSPROXYD_WORKER_CONCURRENCY | no | 1 |  |
 | --connection-timeout | SQSPROXYD_CONNECTION_TIMEOUT | no | 30 |  |
 | --max-number-of-messages | SQSPROXYD_MAX_NUMBER_OF_MESSAGES | no | 1 | Max number of receive messages from SQS |
 | --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when receiving empty message |
-| --webhook-healthcheck-url | SQSPROXYD_WEBHOOK_HEALTHCHECK_URL | no | - | Webhook healthcheck URL to GET request |
-| --webhook-healthcheck-interval-seconds | SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS | no | 1 | Interval seconds of request healthcheck endpoint |
-| --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of webhook request. |
+| --api-healthcheck-url | SQSPROXYD_API_HEALTHCHECK_URL | no | - | API healthcheck URL to GET request |
+| --api-healthcheck-interval-seconds | SQSPROXYD_API_HEALTHCHECK_INTERVAL_SECONDS | no | 1 | Interval seconds of request healthcheck endpoint |
+| --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of API request. |
 | --rust-log | SQSPROXYD_RUST_LOG | no | `WARN` | Application logging directive |
 
 ## Contribution
