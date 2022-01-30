@@ -10,9 +10,9 @@ use url::Url;
 
 use crate::domain::config::Config;
 use crate::domain::message::Message;
+use crate::infra::api::Webhook;
 use crate::infra::logging::panic;
 use crate::infra::sqs::Sqs;
-use crate::infra::webhook::Webhook;
 
 pub struct Daemon {
     config: Config,
@@ -200,8 +200,8 @@ impl Daemon {
 mod tests {
     use super::*;
     use crate::domain::message::*;
+    use crate::infra::api::*;
     use crate::infra::sqs::*;
-    use crate::infra::webhook::*;
     use anyhow::anyhow;
     use mockall::predicate::*;
     use std::borrow::Borrow;
