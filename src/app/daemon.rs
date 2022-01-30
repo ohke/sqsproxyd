@@ -10,14 +10,14 @@ use url::Url;
 
 use crate::domain::config::Config;
 use crate::domain::message::Message;
-use crate::infra::api::Webhook;
+use crate::infra::api::Api;
 use crate::infra::logging::panic;
 use crate::infra::sqs::Sqs;
 
 pub struct Daemon {
     config: Config,
     sqs: Box<dyn Sqs + Send + Sync>,
-    webhook: Box<dyn Webhook + Send + Sync>,
+    webhook: Box<dyn Api + Send + Sync>,
 }
 
 impl Daemon {
@@ -114,7 +114,7 @@ impl Daemon {
     }
 
     async fn healthcheck(
-        webhook: &'_ (dyn Webhook + Send + Sync),
+        webhook: &'_ (dyn Api + Send + Sync),
         url: &Url,
         seconds: u64,
     ) -> Result<()> {
@@ -135,7 +135,7 @@ impl Daemon {
 
     async fn poll_process(
         sqs: Box<dyn Sqs + Send + Sync>,
-        webhook: Box<dyn Webhook + Send + Sync>,
+        webhook: Box<dyn Api + Send + Sync>,
         output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
         rx: async_channel::Receiver<Message>,
         mut shutdown_rx: broadcast::Receiver<()>,
@@ -170,7 +170,7 @@ impl Daemon {
     async fn process_message(
         message: Message,
         sqs: &'_ (dyn Sqs + Send + Sync),
-        webhook: &'_ (dyn Webhook + Send + Sync),
+        webhook: &'_ (dyn Api + Send + Sync),
         output_sqs: &Option<Box<dyn Sqs + Send + Sync>>,
     ) -> Result<()> {
         let (is_succeeded, res) = webhook
@@ -219,12 +219,12 @@ mod tests {
             .returning(|_| Ok(()));
         let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
-        let mut webhook = MockWebhook::new();
+        let mut webhook = MockApi::new();
         webhook.expect_post().times(1).returning(|_, message_id| {
             assert_eq!(message_id, "message_id");
             Ok((true, "result".to_string()))
         });
-        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
+        let webhook: Box<dyn Api + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
@@ -260,12 +260,12 @@ mod tests {
             .returning(|_| Ok(()));
         let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
-        let mut webhook = MockWebhook::new();
+        let mut webhook = MockApi::new();
         webhook.expect_post().times(1).returning(|_, message_id| {
             assert_eq!(message_id, "message_id");
             Ok((true, "result".to_string()))
         });
-        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
+        let webhook: Box<dyn Api + Send + Sync> = Box::new(webhook);
 
         let output_sqs = None;
 
@@ -287,12 +287,12 @@ mod tests {
         sqs.expect_delete_message().times(0);
         let sqs: Box<dyn Sqs + Send + Sync> = Box::new(sqs);
 
-        let mut webhook = MockWebhook::new();
+        let mut webhook = MockApi::new();
         webhook.expect_post().times(1).returning(|_, message_id| {
             assert_eq!(message_id, "message_id");
             Ok((false, "result".to_string()))
         });
-        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
+        let webhook: Box<dyn Api + Send + Sync> = Box::new(webhook);
 
         let mut output_sqs = MockSqs::new();
         output_sqs.expect_receive_messages().times(0);
@@ -314,14 +314,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_healthcheck() {
-        let mut webhook = MockWebhook::new();
+        let mut webhook = MockApi::new();
         webhook
             .expect_get()
             .times(3)
             .returning(|_| Err(anyhow!("Error")))
             .times(1)
             .returning(|_| Ok(()));
-        let webhook: Box<dyn Webhook + Send + Sync> = Box::new(webhook);
+        let webhook: Box<dyn Api + Send + Sync> = Box::new(webhook);
 
         Daemon::healthcheck(
             webhook.borrow(),

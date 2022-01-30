@@ -8,7 +8,7 @@ use url::Url;
 
 #[cfg_attr(test, automock)]
 #[async_trait]
-pub trait Webhook {
+pub trait Api {
     async fn get(&self, url: &Url) -> Result<()>;
     async fn post(&self, data: String, message_id: &str) -> Result<(bool, String)>;
 }
@@ -24,7 +24,7 @@ impl WebhookImpl {
 }
 
 #[async_trait]
-impl Webhook for WebhookImpl {
+impl Api for WebhookImpl {
     async fn get(&self, url: &Url) -> Result<()> {
         let client = reqwest::Client::new();
         let _ = client
