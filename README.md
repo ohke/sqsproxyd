@@ -1,13 +1,19 @@
 # sqsproxyd
 **sqsproxyd** is SQS proxy daemon.
 
-This is an application that imitates [SQS daemon](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html) provided in the AWS Elastic Beanstalk worker environment.
-In addition, it has the ability to enqueue a response to another SQS.
+This is an application that imitates [SQS daemon](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html) provided in the [AWS Elastic Beanstalk](https://aws.amazon.com/jp/elasticbeanstalk/) worker environment.
+In addition, it has the ability to send a response (= forward) to another SQS.
+
+![Architecture](image/overview.jpeg)
 
 ## Features
-- Dequeue a message from SQS and make a POST request to the specified Webhook API.
+- Receive (dequeue) a message from SQS and make a POST request to the specified Webhook API.
 - If the Webhook API returns a success response (HTTP status: 2**), removes the message from the SQS.
-- [Option] In addition, if an output SQS is set, the Webhook API success response body be enqueued to that SQS as a message.
+- [Option] If an output SQS is set, the Webhook API success response body be sent (enqueued) to that SQS as a message.
+
+### Why does sqsproxyd implement response forwarding?
+The purpose is to make it easy to build a microservice architecture system using SQS.
+By completely hiding the SQS input and output in sqsproxyd (and its configuration), application developers can focus on implementing the API.
 
 ## Usage
 
@@ -32,6 +38,12 @@ $ docker run ohke/sqsproxyd \
   --webhook-url http://localhost:4000/api
 ```
 
+##### How can I use sqsproxyd images with AWS ECS or Kubernetes?
+Please, see examples.
+
+- [AWS ECS](example/aws)
+- [Kubernetes](example/kubernetes)
+
 ### Configuration
 Either method can be used to pass parameters. If a value exists for both, command-line arguments take precedence.
 
@@ -39,24 +51,52 @@ Either method can be used to pass parameters. If a value exists for both, comman
 - Command-line arguments
 
 #### Parameters
-
 | Command-line argument | Environment variable | Required | Default | Description |
 | -- | -- | -- | -- | -- | 
-| --aws-access-key-id | AWS_ACCESS_KEY_ID | no | - | |
-| --aws-secret-access-key | AWS_SECRET_ACCESS_KEY | no | - | |
-| --aws-session-token | AWS_SESSION_TOKEN | no | - | |
-| --aws-region | SQSPROXYD_AWS_REGION or AWS_DEFAULT_REGION | no | - | |
-| --aws-endpoint | SQSPROXYD_AWS_ENDPOINT | no | - | |
-| --sqs-url | SQSPROXYD_SQS_URL | yes | - |  |
-| --webhook-url | SQSPROXYD_WEBHOOK_URL | yes | - |  |
-| --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | |
-| --worker-concurrency | SQSPROXYD_WORKER_CONCURRENCY | no | 1 | |
-| --connection-timeout | SQSPROXYD_CONNECTION_TIMEOUT | no | 30 | |
-| --max-number-of-messages | SQSPROXYD_MAX_NUMBER_OF_MESSAGES | no | 1 | |
-| --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | |
-| --webhook-healthcheck-url | SQSPROXYD_WEBHOOK_HEALTHCHECK_URL | no | - | |
-| --webhook-healthcheck-interval-seconds | SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS | no | 1 | |
-| --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | |
-| --rust-log | SQSPROXYD_RUST_LOG | no | `WARN` | |
+| --aws-access-key-id | AWS_ACCESS_KEY_ID | no | - | Your AWS access key ID |
+| --aws-secret-access-key | AWS_SECRET_ACCESS_KEY | no | - | Your AWS secret access key |
+| --aws-session-token | AWS_SESSION_TOKEN | no | - | Your AWS session token |
+| --aws-region | SQSPROXYD_AWS_REGION or AWS_DEFAULT_REGION | no | - | Your AWS region name |
+| --aws-endpoint | SQSPROXYD_AWS_ENDPOINT | no | - | To use mock SQS (like [alpine-sqs](https://github.com/roribio/alpine-sqs)) |
+| --sqs-url | SQSPROXYD_SQS_URL | yes | - | SQS URL to input |
+| --webhook-url | SQSPROXYD_WEBHOOK_URL | yes | - | Webhook URL to POST request |
+| --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | SQS URL to forward response message |
+| --worker-concurrency | SQSPROXYD_WORKER_CONCURRENCY | no | 1 |  |
+| --connection-timeout | SQSPROXYD_CONNECTION_TIMEOUT | no | 30 |  |
+| --max-number-of-messages | SQSPROXYD_MAX_NUMBER_OF_MESSAGES | no | 1 | Max number of receive messages from SQS |
+| --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when receiving empty message |
+| --webhook-healthcheck-url | SQSPROXYD_WEBHOOK_HEALTHCHECK_URL | no | - | Webhook healthcheck URL to GET request |
+| --webhook-healthcheck-interval-seconds | SQSPROXYD_WEBHOOK_HEALTHCHECK_INTERVAL_SECONDS | no | 1 | Interval seconds of request healthcheck endpoint |
+| --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of webhook request. |
+| --rust-log | SQSPROXYD_RUST_LOG | no | `WARN` | Application logging directive |
 
-## Development
+## Contribution
+
+### Development
+
+#### Prerequisites
+Install followings.
+
+- [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+- [cargo-make](https://github.com/sagiegurari/cargo-make)
+- [direnv](https://github.com/direnv/direnv)
+- [Docker](https://docs.docker.com/get-docker/)
+- [docker-compose](https://docs.docker.com/compose/install/)
+
+#### Clone and build
+```bash
+$ git clone https://github.com/ohke/sqsproxyd.git
+$ cd sqsproxyd
+$ cargo make
+````
+
+#### Run with mock SQS, API
+```bash
+$ cp ./env/local.env ./.env
+$ direnv allow
+$ docker-compose up sqs api
+$ cargo run
+```
+
+### License
+sqsproxyd is available under the Apache-2.0 open source license.
