@@ -1,6 +1,6 @@
 use md5;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Message {
     pub body: String,
     pub receipt_handle: String,

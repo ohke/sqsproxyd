@@ -5,7 +5,7 @@ use tokio::{
     sync::{broadcast, mpsc},
     time::{sleep, Duration},
 };
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, warn};
 use url::Url;
 
 use crate::domain::config::Config;
@@ -80,6 +80,7 @@ impl Daemon {
                             match response {
                                 Some(messages) => {
                                     if messages.is_empty() {
+                                        warn!("Empty message received. Sleep.");
                                         Self::sleep(self.config.sleep_seconds).await;
                                     } else {
                                         for message in messages {
@@ -91,7 +92,10 @@ impl Daemon {
                                         }
                                     }
                                 }
-                                None => Self::sleep(self.config.sleep_seconds).await,
+                                None => {
+                                    debug!("No received message. Sleep.");
+                                    Self::sleep(self.config.sleep_seconds).await
+                                }
                             }
                         },
                         Err(e) => {
@@ -142,15 +146,15 @@ impl Daemon {
                 result = rx.recv() => {
                     match result {
                         Ok(message) => {
-                            debug!("received message: {:?}", message);
+                            debug!("Received message: {:?}", message);
 
                             if message.check_hash() {
-                                match Self::process_message(message, sqs.borrow(), api.borrow(), &output_sqs).await {
-                                    Ok(()) => debug!("Succeeded to process message."),
-                                    Err(e) => error!("Failed to process message. ({:?})", e),
+                                match Self::process_message(message.clone(), sqs.borrow(), api.borrow(), &output_sqs).await {
+                                    Ok(()) => debug!("Succeeded to process message. ({})", message.message_id),
+                                    Err(e) => error!("Failed to process message. ({}, {:?})", message.message_id, e),
                                 };
                             } else {
-                                warn!("Mismatch message MD5 digest.");
+                                warn!("Mismatch message MD5 digest. ({})", message.message_id);
                             }
                         }
                         Err(e) => {
@@ -185,7 +189,6 @@ impl Daemon {
     }
 
     async fn sleep(seconds: u64) {
-        info!("sleep");
         sleep(Duration::from_secs(seconds)).await;
     }
 }
