@@ -87,7 +87,7 @@ Install followings.
 ```bash
 $ git clone https://github.com/ohke/sqsproxyd.git
 $ cd sqsproxyd
-$ cargo make
+$ cargo build
 ````
 
 #### Run with mock SQS, API
