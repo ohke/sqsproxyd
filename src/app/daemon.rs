@@ -74,7 +74,7 @@ impl Daemon {
         // receive SQS message
         loop {
             tokio::select! {
-                result = self.poll() => {
+                result = self.sqs.receive_messages() => {
                     match result {
                         Ok(response) => {
                             match response {
@@ -84,17 +84,19 @@ impl Daemon {
                                         Self::sleep(self.config.sleep_seconds).await;
                                     } else {
                                         for message in messages {
+                                            debug!("Received message: {:?}", message);
+
                                             let r = tx.send(message).await;
                                             if r.is_err() {
                                                 error!("Failed to send received message to worker.");
                                             }
-                                            r?
+                                            r?;
                                         }
                                     }
                                 }
                                 None => {
                                     debug!("No received message. Sleep.");
-                                    Self::sleep(self.config.sleep_seconds).await
+                                    Self::sleep(self.config.sleep_seconds).await;
                                 }
                             }
                         },
@@ -129,10 +131,6 @@ impl Daemon {
         Ok(())
     }
 
-    async fn poll(&self) -> Result<Option<Vec<Message>>> {
-        self.sqs.receive_messages().await
-    }
-
     async fn poll_process(
         sqs: Box<dyn Sqs + Send + Sync>,
         api: Box<dyn Api + Send + Sync>,
@@ -146,7 +144,7 @@ impl Daemon {
                 result = rx.recv() => {
                     match result {
                         Ok(message) => {
-                            debug!("Received message: {:?}", message);
+                            debug!("Processing message: {:?}", message);
 
                             if message.check_hash() {
                                 match Self::process_message(message.clone(), sqs.borrow(), api.borrow(), &output_sqs).await {
