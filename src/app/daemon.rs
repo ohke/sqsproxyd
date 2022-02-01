@@ -49,6 +49,8 @@ impl Daemon {
 
         // create workers
         let (tx, rx) = async_channel::bounded::<Message>(self.config.worker_concurrency);
+        let (worker_waiting_tx, mut worker_waiting_rx) =
+            mpsc::channel::<()>(self.config.worker_concurrency);
         let (worker_shutdown_tx, _) = broadcast::channel(1);
         let (worker_heartbeat_tx, mut worker_heartbeat_rx) = mpsc::channel::<()>(1);
 
@@ -61,18 +63,30 @@ impl Daemon {
                 Some(u) => Some(Box::new(AwsSqs::new(u.to_string(), &config).await)),
             };
             let rx = rx.clone();
+            let waiting_tx = worker_waiting_tx.clone();
             let shutdown_rx = worker_shutdown_tx.subscribe();
             let heartbeat_tx = worker_heartbeat_tx.clone();
 
             tokio::spawn(async move {
-                Self::poll_process(sqs, api, output_sqs, rx, shutdown_rx, heartbeat_tx).await
+                Self::poll_process(
+                    sqs,
+                    api,
+                    output_sqs,
+                    rx,
+                    waiting_tx,
+                    shutdown_rx,
+                    heartbeat_tx,
+                )
+                .await
             });
+            let _ = worker_waiting_tx.send(()).await;
         }
 
         drop(worker_heartbeat_tx);
 
         // receive SQS message
         loop {
+            let _ = worker_waiting_rx.recv().await;
             tokio::select! {
                 result = self.sqs.receive_messages() => {
                     match result {
@@ -82,6 +96,7 @@ impl Daemon {
                                     if messages.is_empty() {
                                         warn!("Empty message received. Sleep.");
                                         Self::sleep(self.config.sleep_seconds).await;
+                                        let _ = worker_waiting_tx.send(()).await;
                                     } else {
                                         for message in messages {
                                             debug!("Received message: {:?}", message);
@@ -97,12 +112,14 @@ impl Daemon {
                                 None => {
                                     debug!("No received message. Sleep.");
                                     Self::sleep(self.config.sleep_seconds).await;
+                                    let _ = worker_waiting_tx.send(()).await;
                                 }
                             }
                         },
                         Err(e) => {
                             error!("Failed to receive messages from SQS. ({:?})", e);
                             Self::sleep(self.config.sleep_seconds).await;
+                            let _ = worker_waiting_tx.send(()).await;
                         }
                     }
                 }
@@ -136,6 +153,7 @@ impl Daemon {
         api: Box<dyn Api + Send + Sync>,
         output_sqs: Option<Box<dyn Sqs + Send + Sync>>,
         rx: async_channel::Receiver<Message>,
+        waiting_tx: mpsc::Sender<()>,
         mut shutdown_rx: broadcast::Receiver<()>,
         _heartbeat_tx: mpsc::Sender<()>,
     ) -> Result<()> {
@@ -159,6 +177,8 @@ impl Daemon {
                             error!("Failed to receive message. ({:?})", e);
                         }
                     }
+
+                    let _ = waiting_tx.send(()).await;
                 }
                 _ = shutdown_rx.recv() => return Ok(()),
             }
