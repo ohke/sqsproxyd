@@ -34,10 +34,10 @@ pub struct Config {
     pub api_healthcheck_url: Option<Url>,
     #[structopt(
         long,
-        env = "SQSPROXYD_API_HEALTHCHECK_INTERVAL_SECONDS",
+        env = "SQSPROXYD_API_HEALTH_INTERVAL_SECONDS",
         default_value = "1"
     )]
-    pub api_healthcheck_interval_seconds: u64,
+    pub api_health_interval_seconds: u64,
     #[structopt(
         long,
         env = "SQSPROXYD_CONTENT_TYPE",
@@ -99,7 +99,7 @@ mod test {
             "SQSPROXYD_API_HEALTHCHECK_URL",
             "http://api-health-check-url.env:5000/",
         );
-        env::set_var("SQSPROXYD_API_HEALTHCHECK_INTERVAL_SECONDS", "2");
+        env::set_var("SQSPROXYD_API_HEALTH_INTERVAL_SECONDS", "2");
         env::set_var("SQSPROXYD_CONTENT_TYPE", "application/json");
         env::set_var("SQSPROXYD_RUST_LOG", "INFO")
     }
@@ -137,7 +137,7 @@ mod test {
                 api_healthcheck_url: Some(
                     Url::from_str("http://api-health-check-url.env:5000/").unwrap()
                 ),
-                api_healthcheck_interval_seconds: 2,
+                api_health_interval_seconds: 2,
                 content_type: "application/json".to_string(),
                 rust_log: "INFO".to_string(),
             }

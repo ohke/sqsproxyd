@@ -66,7 +66,7 @@ Either method can be used to pass parameters. If a value exists for both, comman
 | --max-number-of-messages | SQSPROXYD_MAX_NUMBER_OF_MESSAGES | no | 1 | Max number of receive messages from SQS |
 | --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when receiving empty message |
 | --api-healthcheck-url | SQSPROXYD_API_HEALTHCHECK_URL | no | - | API healthcheck URL to GET request |
-| --api-healthcheck-interval-seconds | SQSPROXYD_API_HEALTHCHECK_INTERVAL_SECONDS | no | 1 | Interval seconds of request healthcheck endpoint |
+| --api-health-interval-seconds | SQSPROXYD_API_HEALTH_INTERVAL_SECONDS | no | 1 | Interval seconds of request health check endpoint |
 | --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of API request. |
 | --rust-log | SQSPROXYD_RUST_LOG | no | `WARN` | Application logging directive |
 

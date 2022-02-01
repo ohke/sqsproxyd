@@ -37,7 +37,7 @@ impl Daemon {
         // wait for health check
         if let Some(url) = &self.config.api_healthcheck_url {
             tokio::select! {
-                result = Self::healthcheck(self.api.borrow(), url, self.config.api_healthcheck_interval_seconds) => {
+                result = Self::healthcheck(self.api.borrow(), url, self.config.api_health_interval_seconds) => {
                     match result {
                         Ok(v) => v,
                         Err(e) => panic("Failed to pass health check of the API.", e),
