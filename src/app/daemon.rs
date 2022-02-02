@@ -48,13 +48,13 @@ impl Daemon {
         }
 
         // create workers
-        let (tx, rx) = async_channel::bounded::<Message>(self.config.worker_concurrency);
+        let (tx, rx) = async_channel::bounded::<Message>(self.config.num_workers);
         let (worker_waiting_tx, mut worker_waiting_rx) =
-            mpsc::channel::<()>(self.config.worker_concurrency);
+            mpsc::channel::<()>(self.config.num_workers);
         let (worker_shutdown_tx, _) = broadcast::channel(1);
         let (worker_heartbeat_tx, mut worker_heartbeat_rx) = mpsc::channel::<()>(1);
 
-        for _ in 0..self.config.worker_concurrency {
+        for _ in 0..self.config.num_workers {
             let config = self.config.clone();
             let sqs = Box::new(AwsSqs::new(config.sqs_url.to_string(), &config).await);
             let api = Box::new(ApiImpl::new(self.config.clone()));

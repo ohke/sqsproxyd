@@ -61,7 +61,7 @@ Either method can be used to pass parameters. If a value exists for both, comman
 | --sqs-url | SQSPROXYD_SQS_URL | yes | - | SQS URL to input |
 | --api-url | SQSPROXYD_API_URL | yes | - | API URL to POST request |
 | --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | SQS URL to forward response message |
-| --worker-concurrency | SQSPROXYD_WORKER_CONCURRENCY | no | 1 |  |
+| --num-workers | SQSPROXYD_NUM_WORKERS | no | 1 | Number of concurrent workers |
 | --api-timeout-seconds | SQSPROXYD_API_TIMEOUT_SECONDS | no | 30 | API connection timeout seconds |
 | --max-num-messages | SQSPROXYD_MAX_NUM_MESSAGES | no | 1 | Maximum number of messages to be retrieved in a single receiving |
 | --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when retrieving 0 message |
