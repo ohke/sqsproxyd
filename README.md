@@ -63,7 +63,7 @@ Either method can be used to pass parameters. If a value exists for both, comman
 | --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | SQS URL to forward response message |
 | --worker-concurrency | SQSPROXYD_WORKER_CONCURRENCY | no | 1 |  |
 | --connection-timeout | SQSPROXYD_CONNECTION_TIMEOUT | no | 30 |  |
-| --max-number-of-messages | SQSPROXYD_MAX_NUMBER_OF_MESSAGES | no | 1 | Max number of receive messages from SQS |
+| --max-num-messages | SQSPROXYD_MAX_NUM_MESSAGES | no | 1 | Maximum number of messages to be retrieved in a single receiving |
 | --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when receiving empty message |
 | --api-health-url | SQSPROXYD_API_HEALTH_URL | no | - | API health check URL to GET request |
 | --api-health-interval-seconds | SQSPROXYD_API_HEALTH_INTERVAL_SECONDS | no | 1 | Interval seconds of request health check endpoint |

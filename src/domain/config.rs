@@ -26,8 +26,8 @@ pub struct Config {
     pub worker_concurrency: usize,
     #[structopt(long, env = "SQSPROXYD_CONNECTION_TIMEOUT", default_value = "30")]
     pub connection_timeout: u64,
-    #[structopt(long, env = "SQSPROXYD_MAX_NUMBER_OF_MESSAGES", default_value = "1")]
-    pub max_number_of_messages: i32,
+    #[structopt(long, env = "SQSPROXYD_MAX_NUM_MESSAGES", default_value = "1")]
+    pub max_num_messages: i32,
     #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
     pub sleep_seconds: u64,
     #[structopt(long, env = "SQSPROXYD_API_HEALTH_URL")]
@@ -54,10 +54,8 @@ impl Config {
     }
 
     pub fn validate(&self) -> Result<()> {
-        if !(1 <= self.max_number_of_messages && self.max_number_of_messages <= 10) {
-            return Err(anyhow!(
-                "`--max-number-of-messages` should be >= 1 and <= 10."
-            ));
+        if !(1 <= self.max_num_messages && self.max_num_messages <= 10) {
+            return Err(anyhow!("`--max-num-messages` should be >= 1 and <= 10."));
         }
 
         if self.aws_endpoint.is_some()
@@ -93,7 +91,7 @@ mod test {
         );
         env::set_var("SQSPROXYD_WORKER_CONCURRENCY", "2");
         env::set_var("SQSPROXYD_CONNECTION_TIMEOUT", "2");
-        env::set_var("SQSPROXYD_MAX_NUMBER_OF_MESSAGES", "2");
+        env::set_var("SQSPROXYD_MAX_NUM_MESSAGES", "2");
         env::set_var("SQSPROXYD_SLEEP_SECONDS", "2");
         env::set_var(
             "SQSPROXYD_API_HEALTH_URL",
@@ -132,7 +130,7 @@ mod test {
                 ),
                 worker_concurrency: 2,
                 connection_timeout: 2,
-                max_number_of_messages: 2,
+                max_num_messages: 2,
                 sleep_seconds: 2,
                 api_health_url: Some(
                     Url::from_str("http://api-health-check-url.env:5000/").unwrap()
@@ -145,15 +143,15 @@ mod test {
     }
 
     #[test]
-    fn config_validate_max_number_of_messages() {
+    fn config_validate_max_num_messages() {
         set_env_vars();
 
         let mut config = Config::new();
-        config.max_number_of_messages = 0;
+        config.max_num_messages = 0;
         assert!(config.validate().is_err());
 
         let mut config = Config::new();
-        config.max_number_of_messages = 11;
+        config.max_num_messages = 11;
         assert!(config.validate().is_err());
     }
 }
