@@ -35,7 +35,7 @@ impl Daemon {
         _heartbeat_tx: mpsc::Sender<()>,
     ) -> Result<()> {
         // wait for health check
-        if let Some(url) = &self.config.api_healthcheck_url {
+        if let Some(url) = &self.config.api_health_url {
             tokio::select! {
                 result = Self::healthcheck(self.api.borrow(), url, self.config.api_health_interval_seconds) => {
                     match result {

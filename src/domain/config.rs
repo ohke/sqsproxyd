@@ -30,8 +30,8 @@ pub struct Config {
     pub max_number_of_messages: i32,
     #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
     pub sleep_seconds: u64,
-    #[structopt(long, env = "SQSPROXYD_API_HEALTHCHECK_URL")]
-    pub api_healthcheck_url: Option<Url>,
+    #[structopt(long, env = "SQSPROXYD_API_HEALTH_URL")]
+    pub api_health_url: Option<Url>,
     #[structopt(
         long,
         env = "SQSPROXYD_API_HEALTH_INTERVAL_SECONDS",
@@ -96,7 +96,7 @@ mod test {
         env::set_var("SQSPROXYD_MAX_NUMBER_OF_MESSAGES", "2");
         env::set_var("SQSPROXYD_SLEEP_SECONDS", "2");
         env::set_var(
-            "SQSPROXYD_API_HEALTHCHECK_URL",
+            "SQSPROXYD_API_HEALTH_URL",
             "http://api-health-check-url.env:5000/",
         );
         env::set_var("SQSPROXYD_API_HEALTH_INTERVAL_SECONDS", "2");
@@ -134,7 +134,7 @@ mod test {
                 connection_timeout: 2,
                 max_number_of_messages: 2,
                 sleep_seconds: 2,
-                api_healthcheck_url: Some(
+                api_health_url: Some(
                     Url::from_str("http://api-health-check-url.env:5000/").unwrap()
                 ),
                 api_health_interval_seconds: 2,
