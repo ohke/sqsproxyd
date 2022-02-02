@@ -62,9 +62,9 @@ Either method can be used to pass parameters. If a value exists for both, comman
 | --api-url | SQSPROXYD_API_URL | yes | - | API URL to POST request |
 | --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | SQS URL to forward response message |
 | --worker-concurrency | SQSPROXYD_WORKER_CONCURRENCY | no | 1 |  |
-| --connection-timeout | SQSPROXYD_CONNECTION_TIMEOUT | no | 30 |  |
+| --api-timeout-seconds | SQSPROXYD_API_TIMEOUT_SECONDS | no | 30 | API connection timeout seconds |
 | --max-num-messages | SQSPROXYD_MAX_NUM_MESSAGES | no | 1 | Maximum number of messages to be retrieved in a single receiving |
-| --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when receiving empty message |
+| --sleep-seconds | SQSPROXYD_SLEEP_SECONDS | no | 1 | Interval seconds of receiving when retrieving 0 message |
 | --api-health-url | SQSPROXYD_API_HEALTH_URL | no | - | API health check URL to GET request |
 | --api-health-interval-seconds | SQSPROXYD_API_HEALTH_INTERVAL_SECONDS | no | 1 | Interval seconds of request health check endpoint |
 | --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of API request. |

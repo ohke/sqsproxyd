@@ -24,8 +24,8 @@ pub struct Config {
     pub output_sqs_url: Option<Url>,
     #[structopt(long, env = "SQSPROXYD_WORKER_CONCURRENCY", default_value = "1")]
     pub worker_concurrency: usize,
-    #[structopt(long, env = "SQSPROXYD_CONNECTION_TIMEOUT", default_value = "30")]
-    pub connection_timeout: u64,
+    #[structopt(long, env = "SQSPROXYD_API_TIMEOUT_SECONDS", default_value = "30")]
+    pub api_timeout_seconds: u64,
     #[structopt(long, env = "SQSPROXYD_MAX_NUM_MESSAGES", default_value = "1")]
     pub max_num_messages: i32,
     #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
@@ -90,7 +90,7 @@ mod test {
             "https://sqs.us-west-1.amazonaws.com/999999999999/env-output-sqs-url",
         );
         env::set_var("SQSPROXYD_WORKER_CONCURRENCY", "2");
-        env::set_var("SQSPROXYD_CONNECTION_TIMEOUT", "2");
+        env::set_var("SQSPROXYD_API_TIMEOUT_SECONDS", "2");
         env::set_var("SQSPROXYD_MAX_NUM_MESSAGES", "2");
         env::set_var("SQSPROXYD_SLEEP_SECONDS", "2");
         env::set_var(
@@ -129,7 +129,7 @@ mod test {
                     .unwrap()
                 ),
                 worker_concurrency: 2,
-                connection_timeout: 2,
+                api_timeout_seconds: 2,
                 max_num_messages: 2,
                 sleep_seconds: 2,
                 api_health_url: Some(
