@@ -1,5 +1,5 @@
 use crate::{ApiImpl, AwsSqs};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::borrow::Borrow;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -96,7 +96,9 @@ impl Daemon {
                                     if messages.is_empty() {
                                         warn!("Empty message received. Sleep.");
                                         Self::sleep(self.config.sleep_seconds).await;
-                                        let _ = worker_waiting_tx.send(()).await;
+                                        if let Err(e) = worker_waiting_tx.send(()).await {
+                                           error!("Failed to send waiting queue. ({:?})", e);
+                                        }
                                     } else {
                                         for message in messages {
                                             debug!("Received message: {:?}", message);
@@ -112,14 +114,18 @@ impl Daemon {
                                 None => {
                                     debug!("No received message. Sleep.");
                                     Self::sleep(self.config.sleep_seconds).await;
-                                    let _ = worker_waiting_tx.send(()).await;
+                                    if let Err(e) = worker_waiting_tx.send(()).await {
+                                        error!("Failed to send waiting queue. ({:?})", e);
+                                    }
                                 }
                             }
                         },
                         Err(e) => {
                             error!("Failed to receive messages from SQS. ({:?})", e);
                             Self::sleep(self.config.sleep_seconds).await;
-                            let _ = worker_waiting_tx.send(()).await;
+                            if let Err(e) = worker_waiting_tx.send(()).await {
+                                error!("Failed to send waiting queue. ({:?})", e);
+                            }
                         }
                     }
                 }
@@ -178,7 +184,9 @@ impl Daemon {
                         }
                     }
 
-                    let _ = waiting_tx.send(()).await;
+                    if let Err(e) = waiting_tx.send(()).await {
+                        error!("Failed to send waiting queue. ({:?})", e);
+                    }
                 }
                 _ = shutdown_rx.recv() => return Ok(()),
             }
@@ -193,8 +201,7 @@ impl Daemon {
     ) -> Result<()> {
         let (is_succeeded, res) = api.post(message.body.clone(), &message.message_id).await?;
         if !is_succeeded {
-            error!("Not succeeded: {:?}", &res);
-            return Ok(());
+            return Err(anyhow!("API returns failed status response."));
         }
 
         if output_sqs.is_some() {
@@ -322,9 +329,11 @@ mod tests {
             message_id: "message_id".to_string(),
         };
 
-        Daemon::process_message(message, sqs.borrow(), api.borrow(), &output_sqs)
-            .await
-            .unwrap();
+        assert!(
+            Daemon::process_message(message, sqs.borrow(), api.borrow(), &output_sqs)
+                .await
+                .is_err()
+        );
     }
 
     #[tokio::test]
