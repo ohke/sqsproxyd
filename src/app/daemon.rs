@@ -95,7 +95,7 @@ impl Daemon {
                                 Some(messages) => {
                                     if messages.is_empty() {
                                         warn!("Empty message received. Sleep.");
-                                        Self::sleep(self.config.sleep_seconds).await;
+                                        Self::sleep(self.config.sleep_msec).await;
                                         if let Err(e) = worker_waiting_tx.send(()).await {
                                            error!("Failed to send waiting queue. ({:?})", e);
                                         }
@@ -113,7 +113,7 @@ impl Daemon {
                                 }
                                 None => {
                                     debug!("No received message. Sleep.");
-                                    Self::sleep(self.config.sleep_seconds).await;
+                                    Self::sleep(self.config.sleep_msec).await;
                                     if let Err(e) = worker_waiting_tx.send(()).await {
                                         error!("Failed to send waiting queue. ({:?})", e);
                                     }
@@ -122,7 +122,7 @@ impl Daemon {
                         },
                         Err(e) => {
                             error!("Failed to receive messages from SQS. ({:?})", e);
-                            Self::sleep(self.config.sleep_seconds).await;
+                            Self::sleep(self.config.sleep_msec).await;
                             if let Err(e) = worker_waiting_tx.send(()).await {
                                 error!("Failed to send waiting queue. ({:?})", e);
                             }
@@ -213,8 +213,8 @@ impl Daemon {
         Ok(())
     }
 
-    async fn sleep(seconds: u64) {
-        sleep(Duration::from_secs(seconds)).await;
+    async fn sleep(milliseconds: u64) {
+        sleep(Duration::from_millis(milliseconds)).await;
     }
 }
 

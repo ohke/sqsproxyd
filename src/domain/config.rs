@@ -26,8 +26,8 @@ pub struct Config {
     pub num_workers: usize,
     #[structopt(long, env = "SQSPROXYD_API_TIMEOUT_SECONDS", default_value = "30")]
     pub api_timeout_seconds: u64,
-    #[structopt(long, env = "SQSPROXYD_SLEEP_SECONDS", default_value = "1")]
-    pub sleep_seconds: u64,
+    #[structopt(long, env = "SQSPROXYD_SLEEP_MSEC", default_value = "1000")]
+    pub sleep_msec: u64,
     #[structopt(long, env = "SQSPROXYD_API_HEALTH_URL")]
     pub api_health_url: Option<Url>,
     #[structopt(
@@ -85,7 +85,7 @@ mod test {
         );
         env::set_var("SQSPROXYD_NUM_WORKERS", "2");
         env::set_var("SQSPROXYD_API_TIMEOUT_SECONDS", "2");
-        env::set_var("SQSPROXYD_SLEEP_SECONDS", "2");
+        env::set_var("SQSPROXYD_SLEEP_MSEC", "2");
         env::set_var(
             "SQSPROXYD_API_HEALTH_URL",
             "http://api-health-check-url.env:5000/",
@@ -123,7 +123,7 @@ mod test {
                 ),
                 num_workers: 2,
                 api_timeout_seconds: 2,
-                sleep_seconds: 2,
+                sleep_msec: 2,
                 api_health_url: Some(
                     Url::from_str("http://api-health-check-url.env:5000/").unwrap()
                 ),
