@@ -24,8 +24,8 @@ pub struct Config {
     pub output_sqs_url: Option<Url>,
     #[structopt(long, env = "SQSPROXYD_NUM_WORKERS", default_value = "1")]
     pub num_workers: usize,
-    #[structopt(long, env = "SQSPROXYD_API_TIMEOUT_SECONDS", default_value = "30")]
-    pub api_timeout_seconds: u64,
+    #[structopt(long, env = "SQSPROXYD_API_TIMEOUT_MSEC", default_value = "30000")]
+    pub api_timeout_msec: u64,
     #[structopt(long, env = "SQSPROXYD_SLEEP_MSEC", default_value = "1000")]
     pub sleep_msec: u64,
     #[structopt(long, env = "SQSPROXYD_API_HEALTH_URL")]
@@ -84,7 +84,7 @@ mod test {
             "https://sqs.us-west-1.amazonaws.com/999999999999/env-output-sqs-url",
         );
         env::set_var("SQSPROXYD_NUM_WORKERS", "2");
-        env::set_var("SQSPROXYD_API_TIMEOUT_SECONDS", "2");
+        env::set_var("SQSPROXYD_API_TIMEOUT_MSEC", "2");
         env::set_var("SQSPROXYD_SLEEP_MSEC", "2");
         env::set_var(
             "SQSPROXYD_API_HEALTH_URL",
@@ -122,7 +122,7 @@ mod test {
                     .unwrap()
                 ),
                 num_workers: 2,
-                api_timeout_seconds: 2,
+                api_timeout_msec: 2,
                 sleep_msec: 2,
                 api_health_url: Some(
                     Url::from_str("http://api-health-check-url.env:5000/").unwrap()

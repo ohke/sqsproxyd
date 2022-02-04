@@ -62,11 +62,11 @@ Either method can be used to pass parameters. If a value exists for both, comman
 | --api-url | SQSPROXYD_API_URL | yes | - | API URL to POST request |
 | --output-sqs-url | SQSPROXYD_OUTPUT_SQS_URL | no | - | SQS URL to forward response message |
 | --num-workers | SQSPROXYD_NUM_WORKERS | no | 1 | Number of concurrent workers |
-| --api-timeout-seconds | SQSPROXYD_API_TIMEOUT_SECONDS | no | 30 | API connection timeout seconds |
+| --api-timeout-msec | SQSPROXYD_API_TIMEOUT_MSEC | no | 30 | API connection timeout milliseconds |
 | --sleep-msec | SQSPROXYD_SLEEP_MSEC | no | 1 | Interval milliseconds of receiving when retrieving 0 message |
 | --api-health-url | SQSPROXYD_API_HEALTH_URL | no | - | API health check URL to GET request |
 | --api-health-interval-seconds | SQSPROXYD_API_HEALTH_INTERVAL_SECONDS | no | 1 | Interval seconds of request health check endpoint |
-| --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of API request. |
+| --content-type | SQSPROXYD_CONTENT_TYPE | no | `application/json` | Content-type header of API request |
 | --rust-log | SQSPROXYD_RUST_LOG | no | `WARN` | Application logging directive |
 
 ## Contribution
