@@ -49,6 +49,7 @@ impl Api for ApiImpl {
             )
             .header(reqwest::header::CONTENT_TYPE, &self.config.content_type)
             .header("X-SQSPROXYD-MESSAGE-ID", message_id)
+            .header("X-ECHO-TIME", "0")
             .timeout(Duration::from_secs(self.config.api_timeout_seconds))
             .body(data)
             .send()
