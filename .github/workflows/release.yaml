@@ -41,7 +41,7 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - run: cargo make compress-release-binary
         env:
-          RELEASE_TARGET: linux
+          TARGET_OS: linux
       - uses: softprops/action-gh-release@v1
         with:
           files: sqsproxyd-${TAG_NAME}-x86_64-unknown-linux-musl.zip
