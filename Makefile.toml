@@ -1,7 +1,7 @@
 [env]
 VERSION = { script = ["cargo metadata --no-deps | jq -r '.packages[0].version'"] }
 IMAGE_REPOSITORY = { source = "${DOCKER_REPOSITORY}", default_value = "ohke/sqsproxyd" }
-RELEASE_TARGET = { source = "${TARGET_OS}", mapping = {"linux" = "x86_64-unknown-linux-musl", "macos" = "x86_64-apple-darwin"} }
+RELEASE_TARGET = { source = "${RELEASE_TARGET}", default_value = "x86_64-unknown-linux-musl" }
 
 [tasks.format]
 install_crate = "rustfmt"
