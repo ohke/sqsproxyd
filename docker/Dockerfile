@@ -8,14 +8,20 @@ WORKDIR /usr/src/sqsproxyd
 
 FROM dev AS release-builder
 
-ARG RELEASE_TARGET=x86_64-unknown-linux-gnu
+ENV RELEASE_TARGET=x86_64-unknown-linux-gnu
+RUN rustup target add $RELEASE_TARGET
+CMD ["sh", "-c", "cargo make --env RELEASE_TARGET=$RELEASE_TARGET build-release"]
+
+FROM release-builder AS release
+
+ENV RELEASE_TARGET=x86_64-unknown-linux-gnu
 COPY . .
-RUN rustup target add ${RELEASE_TARGET} && \
-    cargo make --env RELEASE_TARGET=${RELEASE_TARGET} build-release
+RUN cargo make --env RELEASE_TARGET=$RELEASE_TARGET build-release && \
+    mkdir -p target/release && \
+    cp target/${RELEASE_TARGET}/release/sqsproxyd ./target/release/sqsproxyd
 
 # hadolint ignore=DL3006
 FROM gcr.io/distroless/cc AS sqsproxyd
 
-ARG RELEASE_TARGET=x86_64-unknown-linux-gnu
-COPY --from=release-builder /usr/src/sqsproxyd/target/${RELEASE_TARGET}/release/sqsproxyd /bin/sqsproxyd
+COPY --from=release /usr/src/sqsproxyd/target/release/sqsproxyd /bin/sqsproxyd
 ENTRYPOINT ["sqsproxyd"]

@@ -9,18 +9,14 @@ services:
     depends_on:
       - sqsproxyd-api
       - sqsproxyd-sqs
-  builder:
-    image: sqsproxyd:builder
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      target: builder
-  release-builder:
+  release-build:
     image: sqsproxyd:release-builder
     build:
       context: .
       dockerfile: docker/Dockerfile
       target: release-builder
+    volumes:
+      - .:/usr/src/sqsproxyd
   dev:
     image: sqsproxyd:dev
     build:
