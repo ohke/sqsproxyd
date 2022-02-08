@@ -16,7 +16,7 @@ FROM release-builder AS release
 
 ENV RELEASE_TARGET=x86_64-unknown-linux-gnu
 COPY . .
-RUN cargo make --env RELEASE_TARGET=$RELEASE_TARGET build-release && \
+RUN cargo make build-release && \
     mkdir -p target/release && \
     cp target/${RELEASE_TARGET}/release/sqsproxyd ./target/release/sqsproxyd
 

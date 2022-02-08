@@ -1,7 +1,7 @@
 [env]
 VERSION = { script = ["cargo metadata --no-deps | jq -r '.packages[0].version'"] }
-IMAGE_REPOSITORY = { source = "${DOCKER_REPOSITORY}", default_value = "ohke/sqsproxyd" }
-RELEASE_TARGET = { source = "${RELEASE_TARGET}", default_value = "x86_64-unknown-linux-musl" }
+IMAGE_REPOSITORY = { value = "ohke/sqsproxyd", condition = { env_not_set = ["IMAGE_REPOSITORY"] } }
+RELEASE_TARGET = { value = "x86_64-unknown-linux-gnu", condition = { env_not_set = ["RELEASE_TARGET"] } }
 
 [tasks.format]
 install_crate = "rustfmt"
@@ -50,10 +50,7 @@ args = [
     "--target=${RELEASE_TARGET}"
 ]
 
-[tasks.compress-release-binary]
-dependencies = [
-    "build-release"
-]
+[tasks.compress-binary]
 script = '''
 #!/bin/bash -eu
 
