@@ -40,10 +40,10 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
       - uses: Swatinem/rust-cache@v1
       - run: cargo make compress-release-binary
-        env:
-          TARGET_OS: linux
-      - uses: softprops/action-gh-release@v1
+      - uses: svenstaro/upload-release-action@v2
         with:
-          files: sqsproxyd-${TAG_NAME}-x86_64-unknown-linux-musl.zip
-        env:
-          TAG_NAME: ${{ github.event.release.tag_name }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: '*.zip'
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
