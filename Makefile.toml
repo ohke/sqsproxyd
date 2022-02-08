@@ -54,5 +54,7 @@ args = [
 script = '''
 #!/bin/bash -eu
 
-zip sqsproxyd-${VERSION}-${RELEASE_TARGET}.zip ./target/${RELEASE_TARGET}/release/sqsproxyd
+cp ./target/${RELEASE_TARGET}/release/sqsproxyd ./sqsproxyd
+zip sqsproxyd-${VERSION}-${RELEASE_TARGET}.zip ./sqsproxyd
+rm ./sqsproxyd
 '''
