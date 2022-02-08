@@ -39,6 +39,7 @@ jobs:
           toolchain: stable
       - uses: davidB/rust-cargo-make@v1
       - uses: Swatinem/rust-cache@v1
+      - run: cargo make build-release
       - run: cargo make compress-binary
       - uses: svenstaro/upload-release-action@v2
         with:
