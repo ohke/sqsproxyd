@@ -1,7 +1,11 @@
 # sqsproxyd
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ohke/sqsproxyd?label=Release)
+![Docker Image Version (latest semver)](https://img.shields.io/docker/v/ohke/sqsproxyd?label=Docker%20Hub)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/ohke/sqsproxyd/check-push/main?label=CI)
+
 **sqsproxyd** is SQS proxy daemon.
 
-This is an application that imitates [SQS daemon](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html) provided in the [AWS Elastic Beanstalk](https://aws.amazon.com/jp/elasticbeanstalk/) worker environment.
+This is an application that imitates [SQS daemon (sqsd)](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html) provided in the [AWS Elastic Beanstalk](https://aws.amazon.com/jp/elasticbeanstalk/) worker environment.
 In addition, it has the ability to send a response (= forward) to another SQS.
 
 ![Architecture](image/overview.jpeg)
