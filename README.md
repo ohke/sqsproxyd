@@ -1,7 +1,7 @@
 # sqsproxyd
-[![Release](https://img.shields.io/github/v/release/ohke/sqsproxyd)](https://github.com/ohke/sqsproxyd/releases)
-[![Docker Hub](https://img.shields.io/docker/v/ohke/sqsproxyd)](https://hub.docker.com/repository/docker/ohke/sqsproxyd)
-[![CI](https://img.shields.io/github/workflow/status/ohke/sqsproxyd/CI/main)](https://github.com/ohke/sqsproxyd/actions)
+[![Release](https://img.shields.io/github/v/release/ohke/sqsproxyd?label=Release)](https://github.com/ohke/sqsproxyd/releases)
+[![Docker Hub](https://img.shields.io/docker/v/ohke/sqsproxyd?label=Docker%20Hub)](https://hub.docker.com/repository/docker/ohke/sqsproxyd)
+[![CI](https://img.shields.io/github/workflow/status/ohke/sqsproxyd/CI/main?label=CI)](https://github.com/ohke/sqsproxyd/actions)
 
 **sqsproxyd** is SQS proxy daemon.
 
