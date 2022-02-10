@@ -2,6 +2,7 @@ on:
   push:
     paths:
       - docker/Dockerfile
+name: Lint Dockerfile
 jobs:
   check:
     runs-on: ubuntu-latest
