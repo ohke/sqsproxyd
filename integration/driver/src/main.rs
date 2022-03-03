@@ -1,4 +1,5 @@
 use aws_sdk_sqs::{Client, Config, Endpoint, Region};
+use aws_sdk_sqs::model::Message;
 use http::Uri;
 use serde::Deserialize;
 use structopt::StructOpt;
@@ -53,24 +54,33 @@ async fn main() {
         .unwrap();
 
     // dequeue from output sqs.
-    for _ in 0..60 {
+    for i in 0..60 {
         let output = client
             .receive_message()
             .queue_url(&opt.output_sqs_url.to_string())
             .send()
             .await
             .unwrap();
-        if let Some(mut messages) = output.messages {
-            match messages.len() {
-                0 => sleep(Duration::from_secs(1)).await,
-                1 => {
-                    let body: Body =
-                        serde_json::from_str(messages.pop().unwrap().body.unwrap().as_str())
-                            .unwrap();
-                    assert_eq!(body.result, 3);
-                    return;
+        match output.messages {
+            None => {
+                println!("[{}] None of messages. Waiting...", i);
+                sleep(Duration::from_secs(1)).await;
+            },
+            Some(mut messages) => {
+                match messages.len() {
+                    0 => {
+                        println!("[{}] Zero messages. Waiting...", i);
+                        sleep(Duration::from_secs(1)).await;
+                    },
+                    1 => {
+                        let body: Body =
+                            serde_json::from_str(messages.pop().unwrap().body.unwrap().as_str())
+                                .unwrap();
+                        assert_eq!(body.result, 3);
+                        return;
+                    }
+                    _ => panic!("{}", format!("output.messages.len() > 1.")),
                 }
-                _ => panic!("{}", format!("output.messages.len() > 1.")),
             }
         }
     }
