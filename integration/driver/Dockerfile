@@ -4,7 +4,7 @@ WORKDIR /root
 
 COPY . .
 RUN cargo build && \
-    cp ./target/debug/driver /usr/local/bin/drivern
+    cp ./target/debug/driver /usr/local/bin/driver
 
 ENV AWS_DEFAULT_REGION=us-west-1
 ENV AWS_SECRET_ACCESS_KEY=dummy
