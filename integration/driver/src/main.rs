@@ -1,5 +1,4 @@
-use aws_sdk_sqs::{Client, Config, Endpoint, Region};
-use aws_sdk_sqs::model::Message;
+use aws_sdk_sqs::{Client, Endpoint};
 use http::Uri;
 use serde::Deserialize;
 use structopt::StructOpt;
@@ -8,14 +7,6 @@ use url::Url;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    // #[structopt(long, env = "AWS_ACCESS_KEY_ID")]
-    // pub aws_access_key_id: Option<String>,
-    // #[structopt(long, env = "AWS_SECRET_ACCESS_KEY")]
-    // pub aws_secret_access_key: Option<String>,
-    // #[structopt(long, env = "AWS_SESSION_TOKEN")]
-    // pub aws_session_token: Option<String>,
-    // #[structopt(long, env = "SQSPROXYD_AWS_REGION")]
-    // pub aws_region: String,
     #[structopt(long, env = "SQSPROXYD_AWS_ENDPOINT")]
     pub aws_endpoint: Uri,
     #[structopt(long, env = "SQSPROXYD_SQS_URL")]
