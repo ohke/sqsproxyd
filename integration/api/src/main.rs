@@ -1,4 +1,4 @@
-use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::{http::Method, web, App, HttpRequest, HttpResponse, HttpServer};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -20,10 +20,19 @@ async fn add(req: web::Json<ReqObj>) -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(web::resource("/add").route(web::post().to(add))))
-        .bind(("0.0.0.0", 5000))?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            .service(
+                web::resource("/health").to(|req: HttpRequest| match *req.method() {
+                    Method::GET => HttpResponse::Ok(),
+                    _ => HttpResponse::NotFound(),
+                }),
+            )
+            .service(web::resource("/add").route(web::post().to(add)))
+    })
+    .bind(("0.0.0.0", 5000))?
+    .run()
+    .await
 }
 
 #[cfg(test)]
