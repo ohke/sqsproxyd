@@ -1,28 +1,17 @@
 version: '3.8'
 services:
-  sqsproxyd:
+  sqsproxyd: &sqsproxyd
     image: sqsproxyd
     build:
       context: .
       dockerfile: docker/Dockerfile
       target: sqsproxyd
-    depends_on:
-      - sqsproxyd-api
-      - sqsproxyd-sqs
-  release-build:
-    image: sqsproxyd:release-builder
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      target: release-builder
-    volumes:
-      - .:/usr/src/sqsproxyd
-  dev:
-    image: sqsproxyd:dev
+  sqsproxyd-dev:
     build:
       context: .
       dockerfile: docker/Dockerfile
       target: dev
+    env_file: env/container.env
     volumes:
       - .:/usr/src/sqsproxyd
     depends_on:
@@ -32,6 +21,23 @@ services:
     image: ealen/echo-server:latest
     ports:
       - "4000:80"
+  sqsproxyd-test-driver:
+    build:
+      context: integration/driver
+    env_file: env/test.env
+    depends_on:
+      - sqsproxyd-test
+  sqsproxyd-test:
+    env_file: env/test.env
+    depends_on:
+      - sqsproxyd-test-api
+      - sqsproxyd-sqs
+    <<: *sqsproxyd
+  sqsproxyd-test-api:
+    build:
+      context: integration/api
+    ports:
+      - "5000:5000"
   sqsproxyd-sqs:
     image: roribio16/alpine-sqs:latest
     ports:

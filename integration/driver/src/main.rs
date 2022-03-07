@@ -35,6 +35,9 @@ async fn main() {
         .build();
     let client = Client::from_conf(sqs_config);
 
+    println!("Waiting for SQS container start up...");
+    sleep(Duration::from_secs(5)).await;
+
     // enqueue to sqs.
     client
         .send_message()
@@ -45,7 +48,7 @@ async fn main() {
         .unwrap();
 
     // dequeue from output sqs.
-    for i in 0..60 {
+    for i in 0..30 {
         let output = client
             .receive_message()
             .queue_url(&opt.output_sqs_url.to_string())
