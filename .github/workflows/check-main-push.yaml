@@ -1,0 +1,11 @@
+on:
+  push:
+    branches:
+      - integration-test-on-container
+name: Check main push
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker-compose run sqsproxyd-test-driver
