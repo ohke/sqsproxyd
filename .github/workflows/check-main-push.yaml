@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - integration-test-on-container
+      - main
 name: Check main push
 jobs:
   integration-test:
